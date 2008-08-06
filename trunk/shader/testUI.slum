@@ -29,7 +29,7 @@ class testUI(slumSurface):
 			this template to a online repository, this method will be replaced
 			automatically by the repository server, with the next global available ID.
 		'''
-		return 1
+		return 1000
 
 	def parameters(self):
 		'''

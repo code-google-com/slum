@@ -56,7 +56,10 @@ class nodeFactory:
 		for classe in self.classes.keys():
 
 			nodeTypeName			= 'slum_%s' % classe
-			nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
+			try:
+				nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
+			except:
+				nodeType 				= OpenMayaMPx.MPxNode.kHwShader
 			nodeCreator 			= shaderSurface.nodeCreator
 			nodeInitializer 		= shaderSurface.nodeInitializer
 			nodeInitializeCallback 	= shaderSurface.slumInitializer

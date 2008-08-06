@@ -41,7 +41,7 @@ else:
 	install = []
 	for each in recursiveFiles('python'):
 		install.append(
-			env.Install(os.path.join(installDir, 'plugins', os.path.dirname(each.replace('python'+os.sep,''))), each)
+			env.Install(os.path.join(installDir, 'python', os.path.dirname(each.replace('python'+os.sep,''))), each)
 		)
 
 	for each in recursiveFiles('shader'):
