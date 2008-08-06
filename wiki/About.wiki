@@ -1,3 +1,5 @@
+[http://slum.googlecode.com/svn/trunk/logo/slumNodes00.jpg][http://slum.googlecode.com/svn/trunk/logo/slumNodes01.jpg]
+
 =About Slum=
 
 SLUM is a project designed to be a central hub for development of render shaders for computer graphics in general.
