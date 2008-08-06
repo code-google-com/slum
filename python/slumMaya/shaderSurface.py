@@ -32,7 +32,7 @@ try:
 except:
 	mayaBaseClass = OpenMayaMPx.MPxNode
 
-class shaderSurface(  mayaBaseClass, shaderBase ):
+class shaderSurface( shaderBase, mayaBaseClass ):
 	def __init__(self):
 		shaderBase.__init__(self)
 		mayaBaseClass.__init__(self)

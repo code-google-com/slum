@@ -20,6 +20,7 @@ To install you just need to add 2 variables to your environment (or maya.env fil
 		MAYA_PLUG_IN_PATH	= %SLUM_PATH%/pythonl;%MAYA_PLUG_IN_PATH%
 
 The MAYA_PLUG_IN_PATH tells maya where to find slum plugin, and SLUM_SEARCH_PATH tells slum where to find shader templates.
+You can add more paths to the SLUM_SEARCH_PATH environment variable to have slum looking on all those paths. 
 
 thats pretty much it...
 

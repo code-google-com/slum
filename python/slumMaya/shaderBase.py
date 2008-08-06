@@ -112,11 +112,14 @@ class AETemplate:
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
 		m.columnLayout( layoutName, visible=True, adjustableColumn=True )
 
-		menu = m.optionMenuGrp(layoutName, label='renderer' )
+		#m.image(w=128,h=128, enable=False)
+
+		menu = m.optionMenuGrp(layoutName, label='preview renderer')
 
 		for each in slumNode.slum._renderers():
-			m.menuItem( label = each )
-		m.optionMenuGrp( menu, edit=True )
+			if each in dir(slumNode.slum):
+				m.menuItem( label = each )
+		m.optionMenuGrp( menu, edit=True, enable=False )
 
 		m.setParent('..')
 
@@ -283,7 +286,7 @@ class shaderBase:
 		dlParameters = ['shadingParameters', 'shadingCode']
 		if plugName in dlParameters:
 			delightShader = node.slum.delight( node )
-			dataHandle.setString( '\n'.join( delightShader[ dlParameters.index(plugName) ] ) )
+			dataHandle.setString( '\n'.join( delightShader[ dlParameters.index(plugName) ] ).replace('\t',' ') )
 			ret = True
 
 		# end of callback! False tells maya to return the attribute value. True returns dataHandle value!
