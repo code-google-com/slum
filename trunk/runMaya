@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+import os
+
+if os.environ.has_key('CYGWIN'):
+	os.environ['MAYA_PLUG_IN_PATH'] = os.popen('cygpath -wa ./python').readlines()[0].strip()
+	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('cygpath -wa ./template').readlines()[0].strip()
+else:
+	os.environ['MAYA_PLUG_IN_PATH'] = os.popen('echo `pwd`/python').readlines()[0].strip()
+	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/template').readlines()[0].strip()
+
+os.system('maya &')
+
