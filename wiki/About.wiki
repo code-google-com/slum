@@ -8,8 +8,8 @@ SLUM is also capable of gather/release shaders from special online repositories,
 
 Just to give a quick idea of how SLUM is organized, we can say that its basically done in 2 main components:
 
-   1. Unified Manager component, which deals with the logic and evaluation of the shaders templates and translation of shader networks. This component is one for all implementations of slum in different 3D Packages.
-   2. The client component, which interfaces the Unified Manager with different 3D packages, like Maya, 3Delight for Maya, Blender, Mayaman, Renderman Studio, etc. 
+   #. Unified Manager component, which deals with the logic and evaluation of the shaders templates and translation of shader networks. This component is one for all implementations of slum in different 3D Packages.
+   #. The client component, which interfaces the Unified Manager with different 3D packages, like Maya, 3Delight for Maya, Blender, Mayaman, Renderman Studio, etc. 
 
 So, basically, SLUM is the Unified Manager component, and it rely on client components to interface it with the 3D packages in the market.
 
