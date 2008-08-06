@@ -33,7 +33,7 @@ else:
 				pass
 		return files
 
-	installDir = 'maya'
+	installDir = 'slumInstall'
 
 	env = Environment()
 	env.Execute( Mkdir(installDir) )
