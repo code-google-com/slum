@@ -1,6 +1,8 @@
 ----
 ==Alpha A released==
 
+[http://slum.googlecode.com/files/slumMaya.zip slum alpha-A download]
+
 Alpha A of slum is available in the Downloads section. Currently its called slumMaya.zip because slum only have the maya client at the moment. This is the first alpha release. Very buggy and incomplete, but working. It fully works in maya 2008. Not tested in 8.5 (although it should work. feedbacks are welcome) At the moment, slum comes just with 2 slum templates:
 
   # testUI.slum - an shader just to test clients UI 
