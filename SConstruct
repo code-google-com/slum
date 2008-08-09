@@ -49,4 +49,6 @@ else:
 			env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
 		)
 
+	install.append( env.Install(installDir, 'README') )
+
 	env.Alias( 'install', install)
