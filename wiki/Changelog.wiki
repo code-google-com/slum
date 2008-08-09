@@ -1,4 +1,11 @@
 ----
+==Alpha A released - with README==
+
+[http://slum.googlecode.com/files/slumAlphaA.zip slum alpha-A download with README]
+
+the same alpha A, but this one comes with a README file with install information!
+
+----
 ==Alpha A released==
 
 [http://slum.googlecode.com/files/slumMaya.zip slum alpha-A download]
