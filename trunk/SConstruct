@@ -51,4 +51,6 @@ else:
 
 	install.append( env.Install(installDir, 'README') )
 
+	install.append( env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" ) )
+
 	env.Alias( 'install', install)
