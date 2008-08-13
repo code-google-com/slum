@@ -1,7 +1,10 @@
 ----
 ==Alpha B released==
 
+[http://slum.googlecode.com/files/slumAlphaB.zip alpha-b download]
+
 Alpha B. Fixed a bug that was preventing loading slumMayaPlugin.py in maya 8.5.
+
 
 ----
 ==Alpha A released - with README==
