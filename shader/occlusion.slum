@@ -39,12 +39,12 @@ class occlusion(slumSurface):
 		'''
 		Enable 		= parameter( 1.0, 'Enable', ui=ui.checkbox(), help = 'Enable or disable it.')
 		Intensity 	= parameter( 1.0, 'Intensity', help = 'Multiplier for our occlusion.', max = 10, min = 0 )
-		Gamma 		= parameter( 1.0, 'Gamma', help = 'Color of the diffuse surface.', max=2.0, min=0 )
+		Gamma 		= parameter( 1.0, 'Gamma', help = 'a gamma curve to adjust the occlusion output. Very usefull when outputin for film, where you must apply a LUT over your image. You can use this gamma to compensate the attenuation that a LUT causes on the occlusion', max=2.0, min=0 )
 
 		Samples 	= parameter( 16,	'Samples', help = 'Number of ray samples to trace.', max=512 )
 		Adaptive 	= parameter( 1.0,	'AdaptiveSampling', ui=ui.checkbox(), help = 'Changes the number of samples depeding on the geometry it finds. if it shoots some samples and finds geometry, it will shoot more samples to refine the result. If it dont find geometry, it will avoid shooting so many samples. Under 64 samples, adaptive is allways off.' )
 		MaxDistance = parameter( 100.0, 'MaxDistance', help = 'Max distance to trace rays.',max=1000)
-		ConeAngle 	= parameter( 89.0,	'ConeAngle', help = 'An imaginary cone area where the shader shoots the rays.', max=90.0, min=0 )
+		ConeAngle 	= parameter( 89.0,	'ConeAngle', help = 'Cone area where the shader shoots the rays.', max=90.0, min=0 )
 		Bias 		= parameter( 0.01,	'Bias', help = 'A offset bias to avoid geometry to self intersect.' )
 		#TraceSet 	= parameter( '-', 	'TraceSet', help = 'You can create a maya set with the geometry you want to raytrace. The put the name of that set in here so it will only raytrace against the geometry in the set. You can specify multiple sets using comma. Prefix the set name with '-' to ignore it. The default '-' only makes it use all sets (including defaultObjectSet)' )
 
