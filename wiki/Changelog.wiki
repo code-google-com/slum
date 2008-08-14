@@ -1,4 +1,11 @@
 ----
+==Alpha C released - 14/aug==
+
+[http://slum.googlecode.com/files/slumAlphaC.zip alpha-c download]
+
+Alpha C. added a small hack to make slum work with public 3delight version 7.0.0 until DNA releases a new version, which should be anytime soon
+
+----
 ==Alpha B released==
 
 [http://slum.googlecode.com/files/slumAlphaB.zip alpha-b download]
