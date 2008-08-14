@@ -69,5 +69,6 @@ else:
 	install.append( env.Install(installDir, 'README') )
 
 	install.append( env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" ) )
+	install.append( env.Command( "doc/slumDevDoc.pdf", "python", "epydoc -o /tmp $SOURCE/* ; cp /tmp/api.pdf $TARGET" ) )
 
 	env.Alias( 'install', install)
