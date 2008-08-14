@@ -33,12 +33,29 @@ else:
 				pass
 		return files
 
+	def rmDir(path):
+		files=[]
+		if os.path.isfile(path):
+			os.remove(path)
+		elif os.path.isdir(path):
+			for each in glob.glob(os.path.join(path,'*')):
+				rmDir(each)
+			os.rmdir(path)
+		else:
+			pass
+		return files
+
 	installDir = 'slumInstall'
 
+	rmDir(installDir)
+	rmDir("%s.zip" % installDir)
+
 	env = Environment()
-	env.Execute( Mkdir(installDir) )
 
 	install = []
+
+	install.append(	env.Execute( Mkdir(installDir) ) )
+
 	for each in recursiveFiles('python'):
 		install.append(
 			env.Install(os.path.join(installDir, 'python', os.path.dirname(each.replace('python'+os.sep,''))), each)
