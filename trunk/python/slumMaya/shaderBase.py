@@ -286,7 +286,17 @@ class shaderBase:
 		dlParameters = ['shadingParameters', 'shadingCode']
 		if plugName in dlParameters:
 			delightShader = node.slum.delight( node )
-			dataHandle.setString( '\n'.join( delightShader[ dlParameters.index(plugName) ] ).replace('\t',' ') )
+			zcode = delightShader[ dlParameters.index(plugName) ]
+			# ====================================================================================================
+			# hack to allow slum to work with 3delight 7.0.0 version
+			# must remove after new public is available
+			if plugName == 'shadingParameters':
+				zcode = []
+				for line in delightShader[ dlParameters.index(plugName) ]:
+					zcode.append(line.split('=')[0]) # just use text before the '=' character, if any
+			# ====================================================================================================
+			code = '\n'.join( zcode ).replace('\t',' ')
+			dataHandle.setString( code )
 			ret = True
 
 		# end of callback! False tells maya to return the attribute value. True returns dataHandle value!
