@@ -10,6 +10,8 @@ On the links bellow, you should find the latest trunk docs:
 [http://hradec.com/slum/doc/index.html online html format] or [http://hradec.com/slum/doc/api.pdf offline pdf format]
 
 ----
+= Slum Diagrams =
 
+Click the link below for the slum diagrams that shows how slum works. It aims to visually show how slum and clients interact.  
 
-[http://code.google.com/p/slum/wiki/Diagram = Slum Diagrams =]
+[http://code.google.com/p/slum/wiki/Diagram diagrams]
