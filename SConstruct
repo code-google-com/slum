@@ -28,14 +28,12 @@ def rmDir(path, mask=''):
 	return files
 
 installDir = version
-
 rmDir(installDir)
 for each in glob.glob('*.zip'):
 	rmDir("%s.zip" % each)
 rmDir("python", mask='.pyc')
 
 env = Environment()
-
 if  'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
 		print '''
 
