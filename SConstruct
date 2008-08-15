@@ -1,74 +1,63 @@
-
-try:
-	import builds
-	_builds=False
-except:
-	_builds=False
-
 import os, glob
 
+version = 'slumAlphaD'
 
-
-
-if _builds:
-	# maya python module
-	scripts = builds.mayaPythonPlugin(
-				ARGUMENTS,
-				version='0.0.1',
-				mayaVersion='2008',
-				src=builds.globRecursive('python/*'),
-			)
-
-	scripts.finalize()
-
-else:
-	def recursiveFiles(path):
-		files=[]
-		for each in glob.glob(os.path.join(path,'*')):
-			if os.path.isfile(each):
-				files.append(each)
-			elif os.path.isdir(each):
-				files.extend(recursiveFiles(each))
-			else:
-				pass
-		return files
-
-	def rmDir(path):
-		files=[]
-		if os.path.isfile(path):
-			os.remove(path)
-		elif os.path.isdir(path):
-			for each in glob.glob(os.path.join(path,'*')):
-				rmDir(each)
-			os.rmdir(path)
+def recursiveFiles(path):
+	files=[]
+	for each in glob.glob(os.path.join(path,'*')):
+		if os.path.isfile(each):
+			files.append(each)
+		elif os.path.isdir(each):
+			files.extend(recursiveFiles(each))
 		else:
 			pass
-		return files
+	return files
 
-	installDir = 'slumInstall'
+def rmDir(path, mask=''):
+	files=[]
+	if os.path.isfile(path):
+		if mask in path:
+			os.remove(path)
+	elif os.path.isdir(path):
+		for each in glob.glob(os.path.join(path,'*')):
+			rmDir(each,mask)
+		try: os.rmdir(path)
+		except: pass
+	else:
+		pass
+	return files
 
-	rmDir(installDir)
-	rmDir("%s.zip" % installDir)
+installDir = version
 
-	env = Environment()
+rmDir(installDir)
+for each in glob.glob('*.zip'):
+	rmDir("%s.zip" % each)
+rmDir("python", mask='.pyc')
 
-	install = []
+env = Environment()
 
-	install.append(	env.Execute( Mkdir(installDir) ) )
+install = []
 
-	for each in recursiveFiles('python'):
-		install.append(
-			env.Install(os.path.join(installDir, 'python', os.path.dirname(each.replace('python'+os.sep,''))), each)
-		)
+install.append(	env.Execute( Mkdir(installDir) ) )
 
-	for each in recursiveFiles('shader'):
-		install.append(
-			env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
-		)
+for each in recursiveFiles('python'):
+	install.append(
+		env.Install(os.path.join(installDir, 'python', os.path.dirname(each.replace('python'+os.sep,''))), each)
+	)
 
-	install.append( env.Install(installDir, 'README') )
+for each in recursiveFiles('shader'):
+	install.append(
+		env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
+	)
 
-	install.append( env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" ) )
-	install.append( env.Command( "doc/slumDevDoc.pdf", "python", "epydoc -o /tmp $SOURCE/* ; cp /tmp/api.pdf $TARGET" ) )
+install.append( env.Install(installDir, 'README') )
+install.append( env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" ) )
 
-	env.Alias( 'install', install)
+# generate docs
+install.append( env.Command( "docs", "python", 'epydoc -o doc --html %s' % os.path.join('$SOURCE','*') ) )
+install.append( env.Command( "docsvn", "doc", 'svn add $SOURCE' ) )
+
+env.Clean( install, 'tmp' )
+env.Clean( install, installDir )
+
+env.Alias( 'install', install)
