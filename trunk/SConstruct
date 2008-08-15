@@ -36,7 +36,7 @@ rmDir("python", mask='.pyc')
 
 env = Environment()
 
-if  0: #'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
+if  'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
 		print '''
 
 	you must specify what you want scons to do.
@@ -71,7 +71,7 @@ else:
 	# generate docs
 	html = env.Command( "docsHtml", "python", 'epydoc -q -o doc --html %s' % os.path.join('$SOURCE','*') )
 	pdf  = env.Command( "docsPdf", 	"python", 'epydoc -q -o doc --pdf  %s' % os.path.join('$SOURCE','*') )
-	ftp  = env.Command( "ftp", 		"python", 'cd doc;python ~/tools/scripts/syncFTP2.py /htdocs/slum/doc' )
+	ftp  = env.Command( "ftp", 		"python", 'cd doc;~/tools/scripts/syncFTP.py /htdocs/slum/doc' )
 
 	env.Alias( 'doc', html )
 	env.Alias( 'doc', pdf  )
