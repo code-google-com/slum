@@ -19,8 +19,7 @@
 # ---------------------------------------------------------------------------
 
 
-from color import *
-from vector import *
-from collectSlumClasses import *
-from parameter import *
-from slumClasses import *
+from datatypes import *
+from collectClasses import *
+from ui import *
+from shaderClasses import *
