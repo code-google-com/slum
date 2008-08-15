@@ -8,3 +8,8 @@ dependency is that you need to have epydoc installed.
 On the links bellow, you should find the latest trunk docs:
 
 [http://hradec.com/slum/doc/index.html online html format] or [http://hradec.com/slum/doc/api.pdf offline pdf format]
+
+----
+
+
+[http://code.google.com/p/slum/wiki/Diagram = Slum Diagrams =]
