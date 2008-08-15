@@ -21,5 +21,5 @@
 
 from datatypes import *
 from collectClasses import *
-from ui import *
+from uiWrappers import *
 from shaderClasses import *
