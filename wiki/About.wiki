@@ -1,3 +1,4 @@
+#labels Featured
 [http://slum.googlecode.com/svn/trunk/logo/slumNodes00.jpg][http://slum.googlecode.com/svn/trunk/logo/slumNodes01.jpg]
 
 =About Slum=
