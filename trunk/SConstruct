@@ -54,10 +54,11 @@ install.append( env.Install(installDir, 'README') )
 install.append( env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" ) )
 
 # generate docs
-install.append( env.Command( "docs", "python", 'epydoc -o doc --html %s' % os.path.join('$SOURCE','*') ) )
-install.append( env.Command( "docsvn", "doc", 'svn add $SOURCE' ) )
+install.append( env.Command( "docsHtml", "python", 'epydoc -o doc --html %s' % os.path.join('$SOURCE','*') ) )
+install.append( env.Command( "docsPdf", "python", 'epydoc -o doc --pdf %s' % os.path.join('$SOURCE','*') ) )
 
 env.Clean( install, 'tmp' )
+env.Clean( install, 'doc' )
 env.Clean( install, installDir )
 
 env.Alias( 'install', install)
