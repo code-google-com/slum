@@ -1,0 +1,5 @@
+
+= Documentation for Developers =
+
+[http://hradec.com/slum/index.html slum developer docs in html]
+[http://hradec.com/slum/api.pdf slum developer docs in pdf]
