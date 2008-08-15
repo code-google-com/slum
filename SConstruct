@@ -71,8 +71,10 @@ else:
 	# generate docs
 	html = env.Command( "docsHtml", "python", 'epydoc -q -o doc --html %s' % os.path.join('$SOURCE','*') )
 	pdf  = env.Command( "docsPdf", 	"python", 'epydoc -q -o doc --pdf  %s' % os.path.join('$SOURCE','*') )
-	ftp  = env.Command( "ftp", 		"python", 'cd doc;~/tools/scripts/syncFTP.py /htdocs/slum/doc' )
-
 	env.Alias( 'doc', html )
 	env.Alias( 'doc', pdf  )
-	env.Alias( 'ftp', ftp  )
+
+	# ftp docs
+	if not os.system('syncFTP.py > .tmp'):
+		ftp  = env.Command( "ftp", 		"python", 'mkdir -p doc ; cd doc ; ~/tools/scripts/syncFTP.py /htdocs/slum/doc' )
+		env.Alias( 'ftp', ftp  )
