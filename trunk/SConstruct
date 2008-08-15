@@ -1,4 +1,4 @@
-import os, glob
+import os, glob, sys
 
 version = 'slumAlphaD'
 
@@ -36,29 +36,43 @@ rmDir("python", mask='.pyc')
 
 env = Environment()
 
-install = []
+if  0: #'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
+		print '''
 
-install.append(	env.Execute( Mkdir(installDir) ) )
+	you must specify what you want scons to do.
 
-for each in recursiveFiles('python'):
-	install.append(
-		env.Install(os.path.join(installDir, 'python', os.path.dirname(each.replace('python'+os.sep,''))), each)
-	)
+		release - builds a release package
+		doc	- builds all documentation
+		ftp - ftp's the generated documentation to ftp
 
-for each in recursiveFiles('shader'):
-	install.append(
-		env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
-	)
 
-install.append( env.Install(installDir, 'README') )
-install.append( env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" ) )
+		'''
+else:
 
-# generate docs
-install.append( env.Command( "docsHtml", "python", 'epydoc -o doc --html %s' % os.path.join('$SOURCE','*') ) )
-install.append( env.Command( "docsPdf", "python", 'epydoc -o doc --pdf %s' % os.path.join('$SOURCE','*') ) )
+	# release - make a package release
+	for each in recursiveFiles('python'):
+		env.Alias( 'release',
+			env.Install(os.path.join(installDir, 'python', os.path.dirname(each.replace('python'+os.sep,''))), each)
+		)
 
-env.Clean( install, 'tmp' )
-env.Clean( install, 'doc' )
-env.Clean( install, installDir )
+	for each in recursiveFiles('shader'):
+		env.Alias( 'release',
+			env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
+		)
 
-env.Alias( 'install', install)
+	env.Alias( 'release', env.Install(installDir, 'README') )
+	zip = env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" )
+	env.Alias( 'release', zip )
+
+	env.Clean( zip, 'tmp' )
+	env.Clean( zip, installDir )
+	env.Clean( zip, 'doc' )
+
+	# generate docs
+	html = env.Command( "docsHtml", "python", 'epydoc -q -o doc --html %s' % os.path.join('$SOURCE','*') )
+	pdf  = env.Command( "docsPdf", 	"python", 'epydoc -q -o doc --pdf  %s' % os.path.join('$SOURCE','*') )
+	ftp  = env.Command( "ftp", 		"python", 'cd doc;python ~/tools/scripts/syncFTP2.py /htdocs/slum/doc' )
+
+	env.Alias( 'doc', html )
+	env.Alias( 'doc', pdf  )
+	env.Alias( 'ftp', ftp  )
