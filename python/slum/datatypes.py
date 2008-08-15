@@ -20,9 +20,16 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
+import math
+
 class color:
-	# internal variables to hold color data
-	# its defined as a list, so classes based on this can alter it, like vectors use x,y and z
+	''' slum datatype to hold color data.
+	The "internal" variable is a list that defines all the possible keys for this datatype. As default,
+	they are [r,g,b], but they can be overriden by derivated classes, like vector, which defines it as
+	x,y,z.
+	This datatype is defined to simplify a shader implementation, specially when defining slum
+	shader parameters.'''
+
 	internal = ['r','g','b']
 	def __init__(self, data=0, data1=None, data2=None):
 		self.checkValue(data)
@@ -61,3 +68,15 @@ class color:
 		return 3
 	def __delitem__(self, key):
 		pass
+
+class vector(color):
+	internal = ['x','y','z']
+	def length(self):
+		self.createData()
+		return math.sqrt( (self.data[0] * self.data[0]) + (self.data[1] * self.data[1]) + (self.data[2] * self.data[2]) )
+	def normalize(self):
+		len = self.length()
+		return vector(self.data[0]/len, self.data[1]/len, self.data[2]/len)
+
+class normal(vector):
+	pass

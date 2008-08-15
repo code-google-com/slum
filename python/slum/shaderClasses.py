@@ -23,12 +23,18 @@
 
 
 class slum:
+	''' This is the base shader class. Usually, its not used directly when developing shaders.
+	this class have all the methods that a shader can define, including renderers shader code methods
+	and specific client methods.'''
 	@staticmethod
 	def type():
+		''' slum shader type. This method is overriden by other classes to define the slum class type '''
 		return None
 	def ID(self):
+		''' slum shader template ID. Every shader must have an unique ID. '''
 		return None
 	def __init__(self):
+		''' placeholder. No use for this method yet '''
 		pass
 	def upload(self):
 		''' upload template to online repository '''
@@ -42,19 +48,19 @@ class slum:
 
 	# renderers code (returns tupple where 0-parameters and 1-code)
 	def delight(self, parameters):
-		''' returns the shader parameters and code of the delight renderer '''
+		'''returns a tupple where: 0 = 3delight shader parameters and 1 = 3delight shader code'''
 		return ('','')
 	def renderman(self, parameters):
-		''' returns the shader parameters and code of the renderman renderer '''
+		'''returns a tupple where: 0 = renderman shader parameters and 1 = renderman shader code'''
 		return ('','')
 	def air(self, parameters):
-		''' returns the shader parameters and code of the air renderer '''
+		'''returns a tupple where: 0 =  air shader parameters and 1 =  air shader code'''
 		return ('','')
 	def cgfx(self, parameters):
-		''' returns the shader parameters and code of the cgfx renderer '''
+		'''returns a tupple where: 0 = cgfx shader parameters and 1 = cgfx shader code'''
 		return ('','')
 	def glsl(self, parameters):
-		''' returns the shader parameters and code of the glsl renderer '''
+		'''returns a tupple where: 0 = glsl shader parameters and 1 = glsl shader code'''
 		return ('','')
 
 	# support methods - theses methods are basically to support clients.
@@ -86,31 +92,40 @@ class slum:
 
 
 class slumSurface(slum):
+	''' this class is used in a slum template when defining surface shaders.
+	this class is basically a normal slum class, with the override of the type method.
+	This classes are being defined here to make a slum template easier to read, with just the
+	methods that are really needed on it.'''
 	@staticmethod
 	def type():
 		return 'surface'
 
 class slumVolume(slum):
+	''' this class is used in a slum template when defining volume shaders '''
 	@staticmethod
 	def type():
 		return 'volume'
 
 class slumDisplacement(slum):
+	''' this class is used in a slum template when defining displacement shaders '''
 	@staticmethod
 	def type():
 		return 'displacement'
 
 class slumLight(slum):
+	''' this class is used in a slum template when defining light shaders '''
 	@staticmethod
 	def type():
 		return 'light'
 
 class slumColor(slum):
+	''' this class is used in a slum template when defining color utility shaders '''
 	@staticmethod
 	def type():
 		return 'color'
 
 class slumFloat(slum):
+	''' this class is used in a slum template when defining float utility shaders '''
 	@staticmethod
 	def type():
 		return 'float'
