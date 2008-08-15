@@ -1,9 +1,10 @@
 = Documentation for Developers =
 
+This documentation is generated from slum source code comments, using epydoc. 
 
-[http://hradec.com/slum/index.html slum developer docs in html]
+it can be generated automatically from the svn source code, using scons. The only
+dependency is that you need to have epydoc installed.
 
+On the links bellow, you should find the latest trunk docs:
 
-[http://hradec.com/slum/api.pdf slum developer docs in pdf]
-
-
+[http://hradec.com/slum/doc/index.html online html format] or [http://hradec.com/slum/doc/api.pdf offline pdf format]
