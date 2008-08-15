@@ -9,4 +9,8 @@ else:
 	os.environ['MAYA_PLUG_IN_PATH'] += os.path.pathsep+os.popen('echo `pwd`/python').readlines()[0].strip()
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/shader').readlines()[0].strip()
 
-os.system('maya %s' % sys.argv[1])
+
+scene = ''
+if sys.argv[1]:
+	scene = sys.argv[1]
+os.system('maya %s' % scene)
