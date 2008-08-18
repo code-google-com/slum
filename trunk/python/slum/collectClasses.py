@@ -1,5 +1,5 @@
 #
-# collectSlumClasses - 	collect classes defined inside .slum files and return as
+# collectClasses.py - 	collect classes defined inside .slum files and return as
 # 						a dictionary
 #
 #    Copyright (C) 2008 - Roberto Hradec

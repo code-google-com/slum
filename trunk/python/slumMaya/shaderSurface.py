@@ -25,16 +25,16 @@ import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as m
 from maya.mel import eval as meval
-from shaderBase import *
+import shaderBase
 
 try:
 	mayaBaseClass = OpenMayaMPx.MPxHardwareShader
 except:
 	mayaBaseClass = OpenMayaMPx.MPxNode
 
-class shaderSurface( shaderBase, mayaBaseClass ):
+class shaderSurface( shaderBase.shaderBase, mayaBaseClass ):
 	def __init__(self):
-		shaderBase.__init__(self)
+		shaderBase.shaderBase.__init__(self)
 		mayaBaseClass.__init__(self)
 	@staticmethod
 	def nodeCreator():
