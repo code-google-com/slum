@@ -1,5 +1,5 @@
 #
-# parameter - classes to define slum template parameters and UI formating
+# uiWrappers.py - classes to define slum template parameters and UI formating
 #
 #    Copyright (C) 2008 - Roberto Hradec
 #

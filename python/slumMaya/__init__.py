@@ -23,3 +23,6 @@ from nodeFactory import *
 from shaderBase import *
 from classNode import *
 from slumNode import *
+
+renderers=[]
+from delight import *

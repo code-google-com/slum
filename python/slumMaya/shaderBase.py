@@ -30,17 +30,17 @@ import slumMaya
 import slum
 import textwrap
 
-
 class AETemplate:
+	'''
+		This class initialize an AETemplate for a given nodetype dinamycally.
+		Basically this avoid the need of having an AEnodetypTemplate.mel file.
+		When the class is created, it sources a piece of mel code that register a
+		global proc AEnodetypeTemplate for the given nodetype.
+		This global proc just calls the static method template of this class, where
+		the code for the template really is, in python.
+		Hopefully, in future versions of maya we will be able to use python directly for AETemplates.
+	'''
 	def __init__(self, nodeType):
-		'''
-			This class initialize an AETemplate for a given nodetype dinamycally.
-			When the class is created, it sources a piece of mel code that register a
-			global proc AEnodetypeTemplate for the given nodetype.
-			This base global proc just calls the static method template of this class, where
-			the code for the template really is, in python.
-			Hopefully, in future versions of maya we will be able to use python procs directly.
-		'''
 		mel =  '''
 			global proc AE%sTemplate(string $nodeName)
 			{
@@ -48,22 +48,34 @@ class AETemplate:
 			}
 		''' % nodeType
 		meval( mel )
+		self.nodeType = nodeType
+
+	@staticmethod
+	def _deleteLayoutIfExists(layoutName, type):
+		'''
+			checks for the existence of a layout with the given layoutName, of type "type"
+			and deletes it, if it exists.
+			Used to delete the framelayout of our template.
+		'''
+		parent = m.setParent(query=True)
+		children = m.layout( parent, q=True, ca=True, )
+		if children!=None:
+			for child in children:
+				if m.objectTypeUI( child, isType=type ) and child==layoutName:
+					m.deleteUI( layoutName, layout=True );
 
 	@staticmethod
 	def template(nodeName):
 		'''
-			The base template code.
+			This is the method called by the dinamic AETemplate mel.
 			Basically, it sets up a scroll layout, adds an extra attributes layout and
 			suppress all attributes found in the node.
-			The real important one is the add of a callCustom template that calls the
+			The real important piece of code is the callCustom template that calls the
 			static method customUI of this class, at runtime.
-			Unfortunately, we need to rely on a small portion of mel code to trigger the call for
+			Unfortunately, AGAIN we need to rely on a small portion of mel code to trigger the call for
 			our customUI method, since a callCustom only calls mel global procs.
-			Hopefully, in future versions of maya we will be able to use python procs directly.
 		'''
 		node = slumMaya.slumNode(nodeName)
-
-		m.editorTemplate( beginScrollLayout=True )
 
 		# supress everything
 		for each in node.keys():
@@ -79,6 +91,8 @@ class AETemplate:
 			}
 			''' % (attrUICustom)
 		meval( mel )
+
+		m.editorTemplate( beginScrollLayout=True )
 		m.editorTemplate( attrUICustom, attrUICustom, '', callCustom=True )
 
 		# add extra controls
@@ -86,20 +100,14 @@ class AETemplate:
 		m.editorTemplate( endScrollLayout=True )
 
 	@staticmethod
-	def _deleteLayoutIfExists(layoutName, type):
-		'''
-			checks for the existence of a layout with the given layoutName, of type "type"
-			and deletes it, if it exists.
-		'''
-		parent = m.setParent(query=True)
-		children = m.layout( parent, q=True, ca=True, )
-		if children!=None:
-			for child in children:
-				if m.objectTypeUI( child, isType=type ) and child==layoutName:
-					m.deleteUI( layoutName, layout=True );
-
-	@staticmethod
 	def customUI(nodeName):
+		'''
+			This method is called at runtime, and its responsible to create the
+			ui for every type of node we have. It calls genericHeader and parameters
+			methods to initialize the generic header all slum shaders have, and the
+			parameters for each node type, based on the returned data from the parameter
+			of a slum class shader.
+		'''
 		nodeName = nodeName.strip('.')
 		slumNode = slumMaya.slumNode(nodeName)
 
@@ -108,18 +116,23 @@ class AETemplate:
 
 	@staticmethod
 	def genericHeader(slumNode):
+		'''
+			this method creates generic UI that is the same for every slum shader node.
+		'''
 		layoutName = "genericHeaderID_%s" % m.nodeType(slumNode.node)
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
 		m.columnLayout( layoutName, visible=True, adjustableColumn=True )
 
-		#m.image(w=128,h=128, enable=False)
-
 		menu = m.optionMenuGrp(layoutName, label='preview renderer')
 
+		# loop trough slum template supported shaders.
 		for each in slumNode.slum._renderers():
-			if each in dir(slumNode.slum):
+			if each in dir(slumNode.slum): # check if theres a method in the slum template for the renderer
 				m.menuItem( label = each )
 		m.optionMenuGrp( menu, edit=True, enable=False )
+
+		menuOption = 'delight' # we should check the selected renderer here. for now, default to delight
+		slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))].swatchUI(slumNode)
 
 		m.setParent('..')
 
@@ -207,30 +220,54 @@ class AETemplate:
 
 
 class shaderBase:
+	'''
+		This is the base class used by slum shader nodes. Every node is initialized
+		based on a class that derivates from this one.
+		For surface shaders for example, we use the shaderSurface class, which is derivate from
+		this class and MPxHardwareShader.
+		For light shaders, we use shaderLight class, which is derivate from this one and MPxLocatorNode
+	'''
 	slum = None
 	def __init__(self, slumFile=None):
-		'''
-			This is the base class used by slum custom nodes.
-		'''
+		''' placeholder. not used at the moment '''
 		pass
 	def compute(self, plug, block):
+		'''
+			this method is called by maya when rendering in software mode or viewport texture mode.
+			we need to come up with a way to have a maya software code inside a slum template that can be
+			executed here. The way maya software shaders is written is pretty complex, compared to
+			rsl and others, so my plan is to create some python classes that would simplify the maya
+			software shader development, bringing it more close to rsl/glsl/cgfx...
+		'''
 		pass
-	# plugin creation method (returns the class object)
 	@staticmethod
 	def nodeCreator():
+		'''
+			plugin creation method (returns the class object). this is needed to register a new node in maya.
+		'''
 		return OpenMayaMPx.asMPxPtr( shaderBase() )
 
-	# plugin initializaton method (do nothing, as slumInitializer is the real deal, called after the node already exists)
+
 	@staticmethod
 	def nodeInitializer():
-		# we do nothing here because we want to initialize it dinamically later, when the node already exists
+		'''
+			plugin initializaton method. this is needed to register a new node in maya.
+			usually, this method would handle all the initialization of parameters for the node.
+			Instead, we initialize the node in another method that is called AFTER the node
+			already exists in maya.
+			This make the whole process much simple, and if we need to update a node from a new version
+			of a slum template, we just call the same method again.
+		'''
 		pass
 
-	# this is the real initialization function... this is called after the node exists in maya.
-	# so we can use this to dinamicaly add the shader attributes. Also, this can be called to refresh the node if the class
-	# code changes.
 	@staticmethod
 	def slumInitializer(object, data):
+		'''
+			this is the real initialization function... this is called after the node exists in maya.
+			so we can use this to dinamicaly add the shader attributes.
+			Also, this same method can be called to update the node if the class code changes.
+		'''
+
 		self = OpenMaya.MFnDependencyNode(object)
 		node = slumMaya.slumNode(self.name())
 
@@ -261,43 +298,32 @@ class shaderBase:
 
 		recursiveAddAttr( node.slum.parameters() )
 
-		# 3delight shader attributes - 3delight uses these to pickup shader parameters and code (like rsl code node)
-		node['shadingParameters'] = ""
-		node.setHidden('shadingParameters', True)
-		node.setInternal('shadingParameters', True)
+		for each in slumMaya.renderers:
+			each.slumInitializer(node)
 
-		node['shadingCode'] = ""
-		node.setHidden('shadingCode', True)
-		node.setInternal('shadingCode', True)
 
-	# callback when changing parameters in the node
 	def setInternalValueInContext ( self, plug, dataHandle,  ctx ):
-		# false forces maya to set the value of the attribute as it should whitout a callback. False is default!
+		'''
+			callback when user changes parameters in the node.
+			Returning false forces maya to set the value of the attribute as it would whitout a callback.
+			returning true means that this function set the value and maya dont need to do a thing.
+			False is default!
+		'''
 		return False
 
-	# callback when reading parameters from the node
 	def getInternalValueInContext ( self, plug, dataHandle,  ctx ):
-		# false forces maya to get teh value of the attribute as it should whitout a callback. False is default!
+		'''
+			callback when reading parameters from the node.
+			returning false forces maya to get teh value of the attribute as it would whitout a callback.
+			returning true forces maya to avoid getting the value itself, and will return whatever
+			this method put inside dataHandle.
+			False is default!
+		'''
 		ret = False
 		node = slumMaya.slumNode( self.name() )
 		plugName = plug.name().split('.')[1]
 
-		# 3delight
-		dlParameters = ['shadingParameters', 'shadingCode']
-		if plugName in dlParameters:
-			delightShader = node.slum.delight( node )
-			zcode = delightShader[ dlParameters.index(plugName) ]
-			# ====================================================================================================
-			# hack to allow slum to work with 3delight 7.0.0 version
-			# must remove after new public is available
-			if plugName == 'shadingParameters':
-				zcode = []
-				for line in delightShader[ dlParameters.index(plugName) ]:
-					zcode.append(line.split('=')[0]) # just use text before the '=' character, if any
-			# ====================================================================================================
-			code = '\n'.join( zcode ).replace('\t',' ')
-			dataHandle.setString( code )
-			ret = True
+		for each in slumMaya.renderers:
+			ret = ret or each.getInternalValueInContext(plugName, node, dataHandle)
 
-		# end of callback! False tells maya to return the attribute value. True returns dataHandle value!
 		return ret

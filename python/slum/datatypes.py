@@ -1,5 +1,5 @@
 #
-# color - a color like datatype
+# datatypes.py - all slum custom datatypes
 #
 #    Copyright (C) 2008 - Roberto Hradec
 #

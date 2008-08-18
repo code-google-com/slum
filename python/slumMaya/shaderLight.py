@@ -26,7 +26,7 @@ import maya.OpenMayaMPx as OpenMayaMPx
 import maya.OpenMayaRender as OpenMayaRender
 import maya.cmds as m
 from maya.mel import eval as meval
-from shaderBase import *
+import shaderBase
 
 gl = OpenMayaRender.MHardwareRenderer.theRenderer().glFunctionTable()
 
@@ -125,10 +125,12 @@ class shaderNetwork:
 
 
 
-class shaderLight( shaderBase, OpenMayaMPx.MPxLocatorNode ):
+class shaderLight( shaderBase.shaderBase, OpenMayaMPx.MPxLocatorNode ):
 	def __init__(self):
-		shaderBase.__init__(self)
+		''' we call __init__ of shaderBase and MPxLocatorNode classes in here '''
+		shaderBase.shaderBase.__init__(self)
 		OpenMayaMPx.MPxLocatorNode.__init__(self)
 	@staticmethod
 	def nodeCreator():
+		''' we override this method to return the proper object of this class '''
 		return OpenMayaMPx.asMPxPtr( shaderLight() )

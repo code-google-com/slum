@@ -1,5 +1,5 @@
 #
-# slumClasses - shader base classes for slumTemplates
+# shaderClasses.py - shader base classes for slumTemplates
 #
 #    Copyright (C) 2008 - Roberto Hradec
 #
