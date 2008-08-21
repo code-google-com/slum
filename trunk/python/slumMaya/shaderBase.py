@@ -127,7 +127,9 @@ class AETemplate:
 
 		# loop trough slum template supported shaders.
 		for each in slumNode.slum._renderers():
-			if each in dir(slumNode.slum): # check if theres a method in the slum template for the renderer
+			# check if the slum template have support for the renderer.
+			# if so, add it to the listbox
+			if each in dir(slumNode.slum):
 				m.menuItem( label = each )
 		m.optionMenuGrp( menu, edit=True, enable=False )
 
@@ -298,8 +300,11 @@ class shaderBase:
 
 		recursiveAddAttr( node.slum.parameters() )
 
+		# loop trough registered renderers and call slumInitializer method
+		# if the renderer object have it
 		for each in slumMaya.renderers:
-			each.slumInitializer(node)
+			if hasattr(each,'slumInitializer'):
+				each.slumInitializer(node)
 
 
 	def setInternalValueInContext ( self, plug, dataHandle,  ctx ):
@@ -309,6 +314,12 @@ class shaderBase:
 			returning true means that this function set the value and maya dont need to do a thing.
 			False is default!
 		'''
+		# loop trough registered renderers and call setInternalValueInContext
+		# method if the renderer object have it
+		for each in slumMaya.renderers:
+			if hasattr(each,'setInternalValueInContext'):
+				ret = ret or each.setInternalValueInContext(plugName, node, dataHandle)
+
 		return False
 
 	def getInternalValueInContext ( self, plug, dataHandle,  ctx ):
@@ -323,7 +334,10 @@ class shaderBase:
 		node = slumMaya.slumNode( self.name() )
 		plugName = plug.name().split('.')[1]
 
+		# loop trough registered renderers and call getInternalValueInContext
+		# method if the renderer object have it
 		for each in slumMaya.renderers:
-			ret = ret or each.getInternalValueInContext(plugName, node, dataHandle)
+			if hasattr(each,'getInternalValueInContext'):
+				ret = ret or each.getInternalValueInContext(plugName, node, dataHandle)
 
 		return ret

@@ -2,6 +2,7 @@
 import slumMaya
 import slum
 import maya.cmds as m
+from maya.mel import eval as meval
 
 
 class delight:
@@ -32,6 +33,17 @@ class delight:
 		node.setInternal('shadingCode', True)
 
 	@staticmethod
+	def setInternalValueInContext(plugName, node, dataHandle):
+		'''
+			This method is called by shaderBase when setting parameters of a slum node.
+			you can use this to automatically call the swatch method to render a swatch
+			when an attribute is changed.
+		'''
+		ret = False
+		delight.swatch(node)
+		return ret
+
+	@staticmethod
 	def getInternalValueInContext(plugName, node, dataHandle):
 		'''
 			This method is called by shaderBase when querying parameters of a slum node.
@@ -60,10 +72,47 @@ class delight:
 		return ret
 
 	@staticmethod
+	def _translateShader(node, compile=True):
+		delete	= []
+		type 	= 'surface'
+		sdl 	= '/tmp/%s_preview' % node
+		nodeSG 	= m.listConnections( node, t='shadingEngine' )
+		if nodeSG:
+			shadingGroup = nodeSG[0]
+		else:
+			shadingGroup = m.createNode('shadingEngine', name='%s_slumPreview' % node, ss=True)
+			m.connectAttr( '%s.outColor' % node, '%s.surfaceShader' % shadingGroup,  f=True)
+			delete.append(shadingGroup)
+
+		if compile:
+			m.delightNodeWatch( f=True )
+			try:
+				meval( 'buildShader("%s", {"%s"}, "%s", "","%s","%s", 1)' % (
+					os.path.basename(sdl),
+					shadingGroup,
+					type,
+					os.path.dirname(sdl),
+					os.path.dirname(sdl)
+				))
+			except:
+				m.confirmDialog( title='slum', message='Error compiling shader %s.\nCheck script editor for more details.' % shadingGroup )
+		else:
+			sdl=meval( 'DL_translateMayaToSl("%s", {"%s"}, "%s")' % (
+				os.path.basename(sdl),
+				shadingGroup,
+				type
+			))
+
+		m.delightNodeWatch( f=True )
+		for each in delete:
+			m.delete(each)
+		return sdl
+
+	@staticmethod
 	def swatchUI(node):
 		'''
 			this method is called by slum node AETemplate to display a swatch images.
-			it should contain all the code to render and display swatch images inside slum node
+			it should contain all the code to display swatch images inside slum node
 			AETemplate. Whith this method, its very easy to create diferent types of swatch
 			preview layouts, depending on the renderer.
 		'''
@@ -75,6 +124,16 @@ class delight:
 
 		m.setParent('..')
 		m.setParent('..')
+
+	@staticmethod
+	def swatch(node):
+		'''
+			this method is called by slum node AETemplate to render a swatch image.
+			everytime an attribute is changed, shaderBase class will call this method
+			to render a new swatch for the node.
+		'''
+
+		pass
 
 
 
