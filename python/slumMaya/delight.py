@@ -1,8 +1,30 @@
+#
+# delight - 	delight renderer class tha defines how slum will interact with 3delight
+#
+#    Copyright (C) 2008 - Roberto Hradec
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
 
 import slumMaya
 import slum
 import maya.cmds as m
 from maya.mel import eval as meval
+from maya.utils import executeInMainThreadWithResult
 
 
 class delight:
@@ -13,6 +35,12 @@ class delight:
 		to register a new renderer class, just do :
 			slumMaya.renderers.append(class name)
 	'''
+	def __init__(self, node):
+		'''
+			initialize the delight class to be used in idle events, for example,
+			to render swatch using the _renderPreview method.
+		'''
+		self.node = node
 	@staticmethod
 	def slumInitializer(node):
 		'''
@@ -40,7 +68,11 @@ class delight:
 			when an attribute is changed.
 		'''
 		ret = False
-		delight.swatch(node)
+		#renderSwatch = delight(node)
+		#maya.cmds.scriptJob( runOnce=True, idleEvent=renderSwatch._renderPreview)
+		#def dd():
+		#	print 'xxx'
+		#maya.cmds.scriptJob( runOnce=True, idleEvent=dd)
 		return ret
 
 	@staticmethod
@@ -72,7 +104,25 @@ class delight:
 		return ret
 
 	@staticmethod
-	def _translateShader(node, compile=True):
+	def swatchUI(node):
+		'''
+			this method is called by slum node AETemplate to display a swatch images.
+			it should contain all the code to display swatch images inside slum node
+			AETemplate. Whith this method, its very easy to create diferent types of swatch
+			preview layouts, depending on the renderer.
+		'''
+		'''
+		m.scrollLayout(h=150)
+		m.gridLayout(cellWidthHeight=(128,150), nr=1)
+
+		for each in range(3):
+			m.image(w=128,h=128, enable=True, i='/tmp/xx.tif')
+
+		m.setParent('..')
+		m.setParent('..')
+		'''
+
+	def _translateShader(self, compile=True):
 		delete	= []
 		type 	= 'surface'
 		sdl 	= '/tmp/%s_preview' % node
@@ -86,16 +136,13 @@ class delight:
 
 		if compile:
 			m.delightNodeWatch( f=True )
-			try:
-				meval( 'buildShader("%s", {"%s"}, "%s", "","%s","%s", 1)' % (
-					os.path.basename(sdl),
-					shadingGroup,
-					type,
-					os.path.dirname(sdl),
-					os.path.dirname(sdl)
-				))
-			except:
-				m.confirmDialog( title='slum', message='Error compiling shader %s.\nCheck script editor for more details.' % shadingGroup )
+			meval( 'buildShader("%s", {"%s"}, "%s", "","%s","%s", 1)' % (
+				os.path.basename(sdl),
+				shadingGroup,
+				type,
+				os.path.dirname(sdl),
+				os.path.dirname(sdl)
+			))
 		else:
 			sdl=meval( 'DL_translateMayaToSl("%s", {"%s"}, "%s")' % (
 				os.path.basename(sdl),
@@ -108,32 +155,60 @@ class delight:
 			m.delete(each)
 		return sdl
 
-	@staticmethod
-	def swatchUI(node):
-		'''
-			this method is called by slum node AETemplate to display a swatch images.
-			it should contain all the code to display swatch images inside slum node
-			AETemplate. Whith this method, its very easy to create diferent types of swatch
-			preview layouts, depending on the renderer.
-		'''
-		m.scrollLayout(h=135)
-		m.gridLayout(cellWidthHeight=(128,128), nr=1)
-
-		for each in range(3):
-			m.image(w=128,h=128, enable=True, i='/tmp/xx.tif')
-
-		m.setParent('..')
-		m.setParent('..')
-
-	@staticmethod
-	def swatch(node):
+	def _renderPreview(self):
 		'''
 			this method is called by slum node AETemplate to render a swatch image.
 			everytime an attribute is changed, shaderBase class will call this method
 			to render a new swatch for the node.
 		'''
+		sdl = self._translateShader()
 
-		pass
+		m.RiBegin(of=outputRib)
+		meval('RiOption -id false  	 -n "rib" -p "format" "string" "ascii" ')
+		meval('RiOption -n "render"  -p "bucketorder" "string" "spiral"  ' )
+		meval('RiOption -n "limits"  -p "bucketsize" "integer[2]" "16 16" ' )
+
+		m.RiPixelSamples( s=(3, 3) )
+		m.RiShadingRate( s=shadingRate )
+		m.RiDisplay( n = imagefile, t = display, m = "rgb")
+		m.RiFormat( r=resolution, pa=1 )
+		m.RiProjection( p=45 )
+		m.RiTranslate( 0, 0, 4)
+
+		m.RiWorldBegin()
+
+		m.RiTransformBegin()
+		m.RiArchiveRecord( m = "verbatim", t = "Translate 4 4 -4\n" )
+		meval('RiLightSource -n "pointlight" -p "intensity" "float" "1" ;' )
+		m.RiTransformEnd()
+
+		m.RiTransformBegin()
+		m.RiArchiveRecord( m = "verbatim", t = "Translate -4 4 -4\n" )
+		meval('RiLightSource -n "pointlight" -p "intensity" "float" "0.5" ;' )
+		m.RiTransformEnd()
+
+		m.RiTransformBegin()
+		m.RiArchiveRecord( m = "verbatim", t = "Translate 0 -4 -4\n" )
+		meval('RiLightSource -n "pointlight" -p "intensity" "float" "0.25" ;' )
+		m.RiTransformEnd()
+
+		# turn raytrace on
+		meval('RiAttribute -n "visibility" -p "trace" "integer" 1 -p "photon" "integer" 1 -p "transmission" "string " "opaque" ;')
+
+		if type == 'surface':
+			m.RiSurface( n = sdl+'.sdl' )
+		elif type == 'displacement':
+			meval('RiAttribute -n "displacementbound" -p "sphere" "float" 2 -p "coordinatesystem" "string" "shader";')
+			m.RiDisplacement( n = sdl+'.sdl' )
+			m.RiSurface( n = "plastic" )
+
+		m.RiArchiveRecord( m = "verbatim", t = eval(model) )
+
+		m.RiArchiveRecord( m = "verbatim", t = "Translate 0 0 0 \n" )
+		m.RiArchiveRecord( m = "verbatim", t = groundRIB )
+
+		m.RiWorldEnd()
+		m.RiEnd()
 
 
 
