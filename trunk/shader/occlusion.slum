@@ -1,5 +1,5 @@
 #
-# diffuse.slum - a simple diffuse slum surface shader to be used by
+# occlusion.slum - a simple occlusion slum surface shader to be used by
 #				 developers as a template shader.
 #
 #    Copyright (C) 2008 - Roberto Hradec
@@ -52,6 +52,8 @@ class occlusion(slumSurface):
 		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
 		return  group( [
+			OutColor,
+			OutTransparency,
 			Enable,
 			Intensity,
 			Gamma,

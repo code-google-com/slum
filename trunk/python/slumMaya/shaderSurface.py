@@ -34,8 +34,8 @@ except:
 
 class shaderSurface( shaderBase.shaderBase, mayaBaseClass ):
 	def __init__(self):
-		shaderBase.shaderBase.__init__(self)
 		mayaBaseClass.__init__(self)
+		shaderBase.shaderBase.__init__(self)
 	@staticmethod
 	def nodeCreator():
 		return OpenMayaMPx.asMPxPtr( shaderSurface() )

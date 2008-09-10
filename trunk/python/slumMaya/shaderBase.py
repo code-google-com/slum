@@ -123,18 +123,26 @@ class AETemplate:
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
 		m.columnLayout( layoutName, visible=True, adjustableColumn=True )
 
+		# add popmenu for the renderer
 		menu = m.optionMenuGrp(layoutName, label='preview renderer')
 
 		# loop trough slum template supported shaders.
+		previewRenderers = []
 		for each in slumNode.slum._renderers():
 			# check if the slum template have support for the renderer.
 			# if so, add it to the listbox
 			if each in dir(slumNode.slum):
 				m.menuItem( label = each )
-		m.optionMenuGrp( menu, edit=True, enable=False )
+				previewRenderers.append(each)
 
-		menuOption = 'delight' # we should check the selected renderer here. for now, default to delight
-		slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))].swatchUI(slumNode)
+		# we should check the selected renderer here. for now, default to the first one in the list
+		m.optionMenuGrp( menu, e=True, value=previewRenderers[0] )
+		menuOption = m.optionMenuGrp( menu, q=True, value=True )
+
+		# run swatchUI method of the current selected renderer
+		rendererObject = slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))]
+		if hasattr(rendererObject,'swatchUI'):
+			rendererObject.swatchUI(slumNode)
 
 		m.setParent('..')
 
@@ -220,8 +228,8 @@ class AETemplate:
 		recursiveAddAttrUI( slumNode.slum.parameters() )
 
 
-
-class shaderBase:
+import sys
+class shaderBase(OpenMayaMPx.MPxNode):
 	'''
 		This is the base class used by slum shader nodes. Every node is initialized
 		based on a class that derivates from this one.
@@ -230,18 +238,20 @@ class shaderBase:
 		For light shaders, we use shaderLight class, which is derivate from this one and MPxLocatorNode
 	'''
 	slum = None
-	def __init__(self, slumFile=None):
+	def __init__(self):
 		''' placeholder. not used at the moment '''
 		pass
-	def compute(self, plug, block):
+	def compute(self, plug, dataBlock):
 		'''
 			this method is called by maya when rendering in software mode or viewport texture mode.
 			we need to come up with a way to have a maya software code inside a slum template that can be
-			executed here. The way maya software shaders is written is pretty complex, compared to
+			executed here. The way maya software shaders are written is pretty complex, compared to
 			rsl and others, so my plan is to create some python classes that would simplify the maya
-			software shader development, bringing it more close to rsl/glsl/cgfx...
+			software shader development, bringing it more close to rsl...
 		'''
+		sys.stderr.write( "\ncompute %s\n" % plug.name() )
 		pass
+
 	@staticmethod
 	def nodeCreator():
 		'''
@@ -285,9 +295,12 @@ class shaderBase:
 		node.evalSlumClass()
 
 		def recursiveAddAttr( parameter ):
+			pars={'input':[], 'output':[]}
 			if parameter.__class__.__name__ == 'group':
 				for each in parameter.value:
-					recursiveAddAttr( each )
+					tmp = recursiveAddAttr( each )
+					pars['input'].extend( tmp['input'] )
+					pars['output'].extend( tmp['output'] )
 			elif parameter.__class__.__name__ == 'parameter':
 				node[parameter.name] = parameter.value
 				node.setInternal( parameter.name, True ) # add set/get callback
@@ -295,10 +308,15 @@ class shaderBase:
 				node.setStorable( parameter.name, True )
 				if not parameter.output:
 					node.setWritable( parameter.name, True )
+					pars['input'].append(parameter.name)
 				else:
 					node.setWritable( parameter.name, False )
+					pars['output'].append(parameter.name)
+			return pars
 
-		recursiveAddAttr( node.slum.parameters() )
+		# use pars to set attributeAffects !!!!
+		pars = recursiveAddAttr( node.slum.parameters() )
+
 
 		# loop trough registered renderers and call slumInitializer method
 		# if the renderer object have it
@@ -306,6 +324,13 @@ class shaderBase:
 			if hasattr(each,'slumInitializer'):
 				each.slumInitializer(node)
 
+	def setDependentsDirty ( self, plugBeingDirtied, affectedPlugs ):
+		sys.stderr.write('...%s...\n' %  plugBeingDirtied.name() )
+		#node = slumMaya.slumNode( self.name() )
+
+
+
+		return True
 
 	def setInternalValueInContext ( self, plug, dataHandle,  ctx ):
 		'''
@@ -318,7 +343,11 @@ class shaderBase:
 		# method if the renderer object have it
 		for each in slumMaya.renderers:
 			if hasattr(each,'setInternalValueInContext'):
-				ret = ret or each.setInternalValueInContext(plugName, node, dataHandle)
+				each.setInternalValueInContext(
+					plug.name().split('.')[1],
+					slumMaya.slumNode( self.name() ),
+					dataHandle
+				)
 
 		return False
 
