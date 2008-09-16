@@ -28,7 +28,7 @@ from maya.mel import eval as meval
 from nodeFactory import *
 import slumMaya
 import slum
-import textwrap
+import os, md5, textwrap
 
 class AETemplate:
 	'''
@@ -135,9 +135,18 @@ class AETemplate:
 				m.menuItem( label = each )
 				previewRenderers.append(each)
 
+
 		# we should check the selected renderer here. for now, default to the first one in the list
 		m.optionMenuGrp( menu, e=True, value=previewRenderers[0] )
 		menuOption = m.optionMenuGrp( menu, q=True, value=True )
+
+		# refresh
+		def updateCode(*args):
+			shaderBase.slumInitializer( slumNode.MObject(), forceRefresh=True )
+		#todo: need to implement md5 check to detect if original source has being modified
+		xpm = "%s" % os.path.join(slumMaya.__path__[0],'images','green.xpm')
+		#m.iconTextButton( style='iconAndTextHorizontal', image1=xpm, label='update code', command=updateCode )
+		m.button( label='update code', h=20, command=updateCode , annotation='Update source code from teplate')
 
 		# run swatchUI method of the current selected renderer
 		rendererObject = slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))]
@@ -273,7 +282,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		pass
 
 	@staticmethod
-	def slumInitializer(object, data):
+	def slumInitializer(object, data=None, forceRefresh=False):
 		'''
 			this is the real initialization function... this is called after the node exists in maya.
 			so we can use this to dinamicaly add the shader attributes.
@@ -288,10 +297,10 @@ class shaderBase(OpenMayaMPx.MPxNode):
 
 		# add the code to the slum attribute. After this is done, every call to slumNode will automatically
 		# evaluate the slumClass
-		classCache = slum.collectSlumClasses()
+		classCache = slum.collectSlumClasses( refresh=forceRefresh )
 		nodeTypeName = self.typeName().strip('slum_')
-		classe = filter( lambda x: x == nodeTypeName, classCache.allClasses.keys() )[0]
-		node['slum'] = classCache.allClasses[classe]
+		#classe = filter( lambda x: x == nodeTypeName, classCache.allClasses.keys() )[0]
+		node['slum'] = classCache.allClasses[nodeTypeName]
 		node.evalSlumClass()
 
 		def recursiveAddAttr( parameter ):

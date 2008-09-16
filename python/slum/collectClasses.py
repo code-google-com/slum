@@ -22,7 +22,7 @@
 # ---------------------------------------------------------------------------
 
 
-import os, glob
+import os, glob, md5
 
 
 defaultSearchPath = 'SLUM_SEARCH_PATH'
@@ -115,7 +115,7 @@ class collectSlumClasses:
 		print 'slum: all done.'
 		return ( localClasses, onlineClasses )
 
-	def _registerSlumFile(self, slumCode):
+	def _registerSlumFile(self, slumCode, path):
 		'''
 			based on a string with slum code on it, registers all class names in it into a temp db
 			for each name, it adds a "code" key with the source code, so later a client
@@ -148,6 +148,8 @@ class collectSlumClasses:
 				# we also store the class name so it can be retrieve later in the client,
 				# even if the data is stored in a diferent format than a dict.
 				slumClasses[classe]['name'] = classe
+				slumClasses[classe]['md5']  = md5.md5( slumClasses[classe]['code'] ).digest()
+				slumClasses[classe]['path'] = path
 		return slumClasses
 
 
@@ -174,6 +176,6 @@ class collectSlumClasses:
 				env = os.environ[searchPath]
 				for path in env.split(os.path.pathsep):
 					for each in glob.glob( os.path.join( path, '*.slum' ) ):
-						slumClasses.update( self._registerSlumFile( open(each).readlines() ) )
+						slumClasses.update( self._registerSlumFile( open(each).readlines(), each ) )
 
 		return slumClasses
