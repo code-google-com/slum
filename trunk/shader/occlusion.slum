@@ -46,7 +46,7 @@ class occlusion(slumSurface):
 		MaxDistance = parameter( 100.0, 'MaxDistance', help = 'Max distance to trace rays.',max=1000)
 		ConeAngle 	= parameter( 89.0,	'ConeAngle', help = 'Cone area where the shader shoots the rays.', max=90.0, min=0 )
 		Bias 		= parameter( 0.01,	'Bias', help = 'A offset bias to avoid geometry to self intersect.' )
-		#TraceSet 	= parameter( '-', 	'TraceSet', help = 'You can create a maya set with the geometry you want to raytrace. The put the name of that set in here so it will only raytrace against the geometry in the set. You can specify multiple sets using comma. Prefix the set name with '-' to ignore it. The default '-' only makes it use all sets (including defaultObjectSet)' )
+		TraceSet 	= parameter( '-', 	'TraceSet', help = '''You can create a maya set with the geometry you want to raytrace. The put the name of that set in here so it will only raytrace against the geometry in the set. You can specify multiple sets using comma. Prefix the set name with '-' to ignore it. The default '-' only makes it use all sets (including defaultObjectSet)''' )
 
 		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
 		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
@@ -63,7 +63,7 @@ class occlusion(slumSurface):
 				MaxDistance,
 				ConeAngle,
 				Bias,
-			#	TraceSet
+				TraceSet
 			], name = 'Ray Trace Parameters' )
 		], name = 'Ambient Occlusion' )
 

@@ -47,7 +47,7 @@ class testUI(slumSurface):
 		test3 		= ui.button(buttonTest,'teste')
 
 		test4 		= parameter( '', 'testString' )
-		test5 		= parameter( '', 'testStringPopup', ui=ui.popup({'optionA':'textureA','optionB':'textureB','optionC':'textureC',}) )
+		#test5 		= parameter( '', 'testStringPopup', ui=ui.popup({'optionA':'textureA','optionB':'textureB','optionC':'textureC',}) )
 
 		OutColor 		= parameter( color(1), 'outColor', output=True ) # required for 3delight surface shaders
 		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
@@ -59,7 +59,7 @@ class testUI(slumSurface):
 			test2,
 			test3,
 			test4,
-			test5,
+			#test5,
 			OutColor,
 			OutTransparency
 		], name = 'Simple Diffuse Shader' )
