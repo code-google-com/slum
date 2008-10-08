@@ -142,7 +142,7 @@ class AETemplate:
 
 		# refresh
 		def updateCode(*args):
-			shaderBase.slumInitializer( slumNode.MObject(), forceRefresh=True )
+			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
 		#todo: need to implement md5 check to detect if original source has being modified
 		xpm = "%s" % os.path.join(slumMaya.__path__[0],'images','green.xpm')
 		#m.iconTextButton( style='iconAndTextHorizontal', image1=xpm, label='update code', command=updateCode )
@@ -282,7 +282,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		pass
 
 	@staticmethod
-	def slumInitializer(object, data=None, forceRefresh=False):
+	def slumInitializer(object, data=None, forceRefresh=False, refreshNodeOnly=False):
 		'''
 			this is the real initialization function... this is called after the node exists in maya.
 			so we can use this to dinamicaly add the shader attributes.
@@ -298,9 +298,15 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		# add the code to the slum attribute. After this is done, every call to slumNode will automatically
 		# evaluate the slumClass
 		classCache = slum.collectSlumClasses( refresh=forceRefresh )
+
 		nodeTypeName = self.typeName().strip('slum_')
-		#classe = filter( lambda x: x == nodeTypeName, classCache.allClasses.keys() )[0]
-		node['slum'] = classCache.allClasses[nodeTypeName]
+		if not refreshNodeOnly:
+			# find slumclass name, get the data from classCache and store in the slum key of the node (string parameter)
+			node['slum'] = classCache.allClasses[nodeTypeName]
+		else:
+			path = classCache.allClasses[nodeTypeName]['path']
+			node['slum'] = classCache._registerSlumFile( open(path).readlines(), path )[nodeTypeName]
+
 		node.evalSlumClass()
 
 		def recursiveAddAttr( parameter ):
