@@ -2,9 +2,18 @@
 
 import os,sys
 
-if os.environ.has_key('CYGWIN'):
-	os.environ['MAYA_PLUG_IN_PATH'] += os.path.pathsep+os.popen('cygpath -wa ./python').readlines()[0].strip()
+if not os.environ.has_key('MAYA_PLUG_IN_PATH'):
+	os.environ['MAYA_PLUG_IN_PATH'] = ""
+
+maya = 'maya'
+if os.environ.has_key('MAYA_APP_PATH'):
+	maya = '%s/bin/maya' % os.environ['MAYA_APP_PATH']
+
+if os.environ.has_key('COMSPEC'):
+	os.environ['MAYA_PLUG_IN_PATH'] += ';'+os.popen('cygpath -wa ./python').readlines()[0].strip()
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('cygpath -wa ./shader').readlines()[0].strip()
+	#maya = os.popen('cygpath -wa "%s"' % maya).readlines()[0].strip()
+	#maya += '.exe'
 else:
 	os.environ['MAYA_PLUG_IN_PATH'] += os.path.pathsep+os.popen('echo `pwd`/python').readlines()[0].strip()
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/shader').readlines()[0].strip()
@@ -13,4 +22,6 @@ else:
 scene = ''
 if len(sys.argv)-1:
 	scene = sys.argv[1]
-os.system('maya %s' % scene)
+	
+	
+os.system('"%s" %s' % (maya,scene))

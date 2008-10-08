@@ -145,7 +145,7 @@ class AETemplate:
 			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
 		#todo: need to implement md5 check to detect if original source has being modified
 		xpm = "%s" % os.path.join(slumMaya.__path__[0],'images','green.xpm')
-		#m.iconTextButton( style='iconAndTextHorizontal', image1=xpm, label='update code', command=updateCode )
+		m.iconTextButton( style='iconOnly', w=32, h=32, image=xpm,  selectionImage=xpm, command=updateCode, annotation = "Update code" )
 		m.button( label='update code', h=20, command=updateCode , annotation='Update source code from teplate')
 
 		# run swatchUI method of the current selected renderer
