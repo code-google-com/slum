@@ -20,6 +20,7 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
+import os
 import slumMaya
 import slum
 import maya.cmds as m
@@ -121,7 +122,16 @@ class delight:
 		m.setParent('..')
 		m.setParent('..')
 		'''
+		m.rowLayout( numberOfColumns=3, adj=3, columnWidth3=((400-128)/2,128,1) )
+		m.text( label = ' ' )
+		m.image( delight._imageControlName(node), w=128,h=128, enable=False,
+				image = os.path.join(slumMaya.__path__[0],'images','previewImage.tif') )
+		m.setParent('..')
+		m.text( label = ' ' )
 
+	@staticmethod
+	def _imageControlName(node):
+		return "__delightPreviewImageID_%s" % node.node
 	def _translateShader(self, compile=True):
 		delete	= []
 		type 	= 'surface'
