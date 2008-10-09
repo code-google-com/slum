@@ -120,8 +120,13 @@ class AETemplate:
 			this method creates generic UI that is the same for every slum shader node.
 		'''
 		layoutName = "genericHeaderID_%s" % m.nodeType(slumNode.node)
+		updateButtonName = "genericHeaderUpdateButtonID_%s" % m.nodeType(slumNode.node)
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
 		m.columnLayout( layoutName, visible=True, adjustableColumn=True )
+
+		# begin first line
+		# ----------------------------------------------------------------------------
+		m.rowLayout( numberOfColumns=2, adj=1, columnWidth2=(1, 20) )
 
 		# add popmenu for the renderer
 		menu = m.optionMenuGrp(layoutName, label='preview renderer')
@@ -140,17 +145,7 @@ class AETemplate:
 		m.optionMenuGrp( menu, e=True, value=previewRenderers[0] )
 		menuOption = m.optionMenuGrp( menu, q=True, value=True )
 
-		# refresh
-		def updateCode(*args):
-			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
-			m.select(slumNode.node)
-		
-			
-		red = [
-			os.path.join(slumMaya.__path__[0],'images','red.xpm'),
-			os.path.join(slumMaya.__path__[0],'images','redSelected.xpm'),
-		]
-		
+		# if node is updated compared to template source
 		if slumNode.updated:
 			xpm = [
 				os.path.join(slumMaya.__path__[0],'images','green.xpm'),
@@ -161,9 +156,18 @@ class AETemplate:
 				os.path.join(slumMaya.__path__[0],'images','red.xpm'),
 				os.path.join(slumMaya.__path__[0],'images','redSelected.xpm'),
 			]
-			
-		m.iconTextButton( style='iconOnly', w=32, h=32, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = "Red light means the code in the node is not the same as the code on disk. It need to be updated. " )
-		#m.button( label='update code', h=20, command=updateCode , annotation='Update source code from teplate')
+
+
+		# update button
+		def updateCode(*args):
+			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
+			m.iconTextButton( updateButtonName, e=True, image=xpm[0] )
+			m.select(slumNode.node)
+		m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = "Red light means the code in the node is not the same as the code on disk. Click on it to update! " )
+
+		m.setParent('..')
+		# ----------------------------------------------------------------------------
+		# end first line
 
 		# run swatchUI method of the current selected renderer
 		rendererObject = slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))]

@@ -65,6 +65,7 @@ class nodeFactory:
 			nodeInitializeCallback 	= shaderSurface.slumInitializer
 			swatchName 				= ":swatch/%s" % OpenMayaUI.MHWShaderSwatchGenerator.initialize()
 
+
 			slumShader = slum.evalSlumClass(self.classes[classe]['code'], classe)
 
 			if slumShader.type() == 'light':
