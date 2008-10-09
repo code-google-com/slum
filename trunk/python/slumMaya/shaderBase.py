@@ -143,10 +143,27 @@ class AETemplate:
 		# refresh
 		def updateCode(*args):
 			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
-		#todo: need to implement md5 check to detect if original source has being modified
-		xpm = "%s" % os.path.join(slumMaya.__path__[0],'images','green.xpm')
-		m.iconTextButton( style='iconOnly', w=32, h=32, image=xpm,  selectionImage=xpm, command=updateCode, annotation = "Update code" )
-		m.button( label='update code', h=20, command=updateCode , annotation='Update source code from teplate')
+			m.select(slumNode.node)
+		
+			
+		red = [
+			os.path.join(slumMaya.__path__[0],'images','red.xpm'),
+			os.path.join(slumMaya.__path__[0],'images','redSelected.xpm'),
+		]
+		
+		if slumNode.updated:
+			xpm = [
+				os.path.join(slumMaya.__path__[0],'images','green.xpm'),
+				os.path.join(slumMaya.__path__[0],'images','greenSelected.xpm'),
+			]
+		else:
+			xpm= [
+				os.path.join(slumMaya.__path__[0],'images','red.xpm'),
+				os.path.join(slumMaya.__path__[0],'images','redSelected.xpm'),
+			]
+			
+		m.iconTextButton( style='iconOnly', w=32, h=32, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = "Red light means the code in the node is not the same as the code on disk. It need to be updated. " )
+		#m.button( label='update code', h=20, command=updateCode , annotation='Update source code from teplate')
 
 		# run swatchUI method of the current selected renderer
 		rendererObject = slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))]

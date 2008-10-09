@@ -25,8 +25,11 @@
 import os, glob, md5
 
 
+
 defaultSearchPath = 'SLUM_SEARCH_PATH'
 defaultOnlineRepositorie = 'http://slum.hradec.com/repositorie'
+
+
 
 def evalSlumClass(code, classeName):
 	'''
@@ -35,6 +38,18 @@ def evalSlumClass(code, classeName):
 	exec 'from slum import *' in globals()
 	exec code in globals()
 	return eval('%s()' % classeName)
+
+def getMD5(code):
+	'''
+		calculates md5 for the given code
+	'''
+	return md5.md5( code ).digest()
+
+def checkMD5(md5, file):
+	'''
+		check if the md5 matchs the md5 of a source file
+	'''
+	return md5 == getMD5( ''.join(open(file).readlines()) )
 
 class collectSlumClasses:
 	'''
@@ -148,7 +163,7 @@ class collectSlumClasses:
 				# we also store the class name so it can be retrieve later in the client,
 				# even if the data is stored in a diferent format than a dict.
 				slumClasses[classe]['name'] = classe
-				slumClasses[classe]['md5']  = md5.md5( slumClasses[classe]['code'] ).digest()
+				slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
 				slumClasses[classe]['path'] = path
 		return slumClasses
 

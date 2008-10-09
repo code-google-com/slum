@@ -40,3 +40,6 @@ class slumNode(classNode):
 			classe = classNode.__getitem__(self,'slum')
 			if classe:
 				self.slum = slum.evalSlumClass(classe['code'], classe['name'])
+				self.updated = slum.checkMD5(classe['md5'], classe['path'])
+
+	
