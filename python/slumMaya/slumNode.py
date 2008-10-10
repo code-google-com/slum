@@ -43,14 +43,6 @@ class slumNode(classNode):
 		if self.classe:
 			self.slum = slum.evalSlumClass(self.classe['code'], self.classe['name'])
 			self.updated = slum.checkMD5(self.classe['md5'], self.classe['path'])
-	def edited(self, set=None):
-		edited = False
-		if self.classe:
-			edited = self.classe['edited']
-			if set:
-				#self.classe['edited'] = set
-				edited = set
-				
-		return edited
+		
 
 	
