@@ -122,6 +122,7 @@ class delight:
 		m.setParent('..')
 		m.setParent('..')
 		'''
+		m.text( label = ' ' )
 		m.rowLayout( numberOfColumns=3, adj=3, columnWidth3=((400-128)/2,128,1) )
 		m.text( label = ' ' )
 		m.image( delight._imageControlName(node), w=128,h=128, enable=False,

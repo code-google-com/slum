@@ -126,7 +126,7 @@ class AETemplate:
 
 		# begin first line
 		# ----------------------------------------------------------------------------
-		m.rowLayout( numberOfColumns=2, adj=1, columnWidth2=(1, 20) )
+		m.rowLayout( numberOfColumns=3, adj=1, columnWidth3=(1, 22,22) )
 
 		# add popmenu for the renderer
 		menu = m.optionMenuGrp(layoutName, label='preview renderer')
@@ -145,25 +145,35 @@ class AETemplate:
 		m.optionMenuGrp( menu, e=True, value=previewRenderers[0] )
 		menuOption = m.optionMenuGrp( menu, q=True, value=True )
 
+		# edit button
+		xpmEdit = [
+				os.path.join(slumMaya.__path__[0],'images','edit.xpm'),
+				os.path.join(slumMaya.__path__[0],'images','editSelected.xpm'),
+			]
+		def editCode(*args):
+			slumNode.edited( True )
+		m.iconTextButton( style='iconOnly', w=20, h=20, image=xpmEdit[0],  selectionImage=xpmEdit[1], command=editCode, annotation = "Edit slum template code stored in this node. After editing, Update light will become yellow, signing it has being edit inside maya." )
+
 		# if node is updated compared to template source
-		if slumNode.updated:
-			xpm = [
-				os.path.join(slumMaya.__path__[0],'images','green.xpm'),
-				os.path.join(slumMaya.__path__[0],'images','greenSelected.xpm'),
-			]
-		else:
-			xpm= [
-				os.path.join(slumMaya.__path__[0],'images','red.xpm'),
-				os.path.join(slumMaya.__path__[0],'images','redSelected.xpm'),
-			]
-
-
+		light = 'green'
+		help = "Green light - node is up-to-date with original slum template. No need to update."
+		if slumNode.edited():
+			light = 'yellow'
+			help = "Yellow light - node has being edited inside maya. If you update, you'll lose all edited code. Don't update!"
+		elif not slumNode.updated:
+			light = 'red'
+			help = "Red light - node is NOT up-to-date with original slum template. Update to bring it to the latest version!"
+		xpm = [
+			os.path.join(slumMaya.__path__[0],'images','%s.xpm' % light),
+			os.path.join(slumMaya.__path__[0],'images','%sSelected.xpm' % light),
+		]
 		# update button
 		def updateCode(*args):
 			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
 			m.iconTextButton( updateButtonName, e=True, image=xpm[0] )
 			m.select(slumNode.node)
-		m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = "Red light means the code in the node is not the same as the code on disk. Click on it to update! " )
+		m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = help )
+
 
 		m.setParent('..')
 		# ----------------------------------------------------------------------------
@@ -279,7 +289,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 			rsl and others, so my plan is to create some python classes that would simplify the maya
 			software shader development, bringing it more close to rsl...
 		'''
-		sys.stderr.write( "\ncompute %s\n" % plug.name() )
+		#sys.stderr.write( "\ncompute %s\n" % plug.name() )
 		pass
 
 	@staticmethod
