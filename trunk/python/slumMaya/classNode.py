@@ -236,9 +236,9 @@ class classNode(dict):
 				index = "['%s']" % ']['.join(self.index)
 				if not self.index:
 					index=""
-				exec( 'data%s=%s' % ( index, str(self) ) )
+				exec( 'data%s=%s' % ( index, dict.__repr__(self) ) )
 				self._classNode.setAttr(self.key, data)
-				data.updatingFrom = False
+				#data.updatingFrom = False
 				self.updating = False
 
 		def __init__(self, _classNode, key,  index=[]):
@@ -249,8 +249,8 @@ class classNode(dict):
 			self._classNode = _classNode
 			self.index = index
 		def __setitem__(self, key, item):
-			t = eval(item.__class__.__name__)
-			if t in [dict,_dict]:
+			t = item.__class__.__name__
+			if t in ['dict','_dict']:
 				dict.__setitem__( self, key, _dict(self.classNode, self.key, self.index+[key]).update(item) )
 			else:
 				dict.__setitem__(self, key, item)

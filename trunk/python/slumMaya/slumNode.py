@@ -34,12 +34,23 @@ class slumNode(classNode):
 	'''
 	def __init__(self, node, data=None):
 		classNode.__init__(self, node, data)
+		self.classe = None
+		if classNode.has_key(self, 'slum'):
+			self.classe = classNode.__getitem__(self,'slum')
+			classNode._dict.__setitem__(self.classe, 'edited', False)
 		self.evalSlumClass()
 	def evalSlumClass(self):
-		if classNode.has_key(self, 'slum'):
-			classe = classNode.__getitem__(self,'slum')
-			if classe:
-				self.slum = slum.evalSlumClass(classe['code'], classe['name'])
-				self.updated = slum.checkMD5(classe['md5'], classe['path'])
+		if self.classe:
+			self.slum = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+			self.updated = slum.checkMD5(self.classe['md5'], self.classe['path'])
+	def edited(self, set=None):
+		edited = False
+		if self.classe:
+			edited = self.classe['edited']
+			if set:
+				#self.classe['edited'] = set
+				edited = set
+				
+		return edited
 
 	
