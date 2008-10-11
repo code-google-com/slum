@@ -92,6 +92,16 @@ class AETemplate:
 			''' % (attrUICustom)
 		meval( mel )
 
+		attrUICustomHeader = 'attrUICustomHeader_%s' % m.nodeType(nodeName)
+		mel =  '''
+			global proc %s(string $node)
+			{
+				python ("import slumMaya\\nslumMaya.AETemplate.customUIHeader('"+$node+"')");
+			}
+			''' % (attrUICustomHeader)
+		meval( mel )
+
+		m.editorTemplate( attrUICustomHeader, attrUICustomHeader, '', callCustom=True )
 		m.editorTemplate( beginScrollLayout=True )
 		m.editorTemplate( attrUICustom, attrUICustom, '', callCustom=True )
 
@@ -111,25 +121,36 @@ class AETemplate:
 		nodeName = nodeName.strip('.')
 		slumNode = slumMaya.slumNode(nodeName)
 
-		AETemplate.genericHeader(slumNode)
 		AETemplate.parameters(slumNode)
 
 	@staticmethod
-	def genericHeader(slumNode):
+	def customUIHeader(nodeName):
 		'''
 			this method creates generic UI that is the same for every slum shader node.
 		'''
-		layoutName = "genericHeaderID_%s" % m.nodeType(slumNode.node)
+		nodeName = nodeName.strip('.')
+		slumNode = slumMaya.slumNode(nodeName)
+
+		layoutName = "customUIHeaderID_%s" % m.nodeType(slumNode.node)
 		updateButtonName = "genericHeaderUpdateButtonID_%s" % m.nodeType(slumNode.node)
+
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
-		m.columnLayout( layoutName, visible=True, adjustableColumn=True )
+		m.columnLayout( layoutName, manage=True, adjustableColumn=True )
 
 		# begin first line
 		# ----------------------------------------------------------------------------
-		m.rowLayout( numberOfColumns=4, adj=4, columnWidth4=(1,22, 22, 10) )
+		m.rowLayout( numberOfColumns=1, columnWidth1=800,
+					columnAttach1 = 'right',  columnOffset1=0)
+		m.iconTextButton( style='iconOnly', w=800, h=40, align='left',
+		#m.image( w=800,h=40, enable=True,
+				 image = os.path.join(slumMaya.__path__[0],'images','slum4maya.xpm') )
+		m.setParent('..')
 
-		m.text( label = ' ' )
-		
+		m.rowLayout( numberOfColumns=4, adj=4, columnWidth4=(20, 20, 100,1),
+					columnAttach4 = ('left','left','left','left'),  columnOffset4=(0,0,0,0))
+
+		#m.text( label = ' ' )
+
 		# if node is updated compared to template source
 		light = 'green'
 		help = "Green light - node is up-to-date with original slum template. No need to update."
@@ -145,8 +166,10 @@ class AETemplate:
 		]
 		# update button
 		def updateCode(*args):
+			m.iconTextButton( updateButtonName, e=True, image=xpm[1] )
 			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
 			m.iconTextButton( updateButtonName, e=True, image=xpm[0] )
+			m.select(cl=True)
 			m.select(slumNode.node)
 		m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = help )
 
@@ -157,12 +180,13 @@ class AETemplate:
 			]
 		def editCode(*args):
 			slumNode['slum']['edited'] = True
+			m.select(cl=True)
 			m.select(slumNode.node)
 		m.iconTextButton( style='iconOnly', w=20, h=20, image=xpmEdit[0],  selectionImage=xpmEdit[1], command=editCode, annotation = "Edit slum template code stored in this node. After editing, Update light will become yellow, signing it has being edit inside maya." )
 
 
 		# add popmenu for the renderer
-		menu = m.optionMenuGrp(layoutName, label='preview renderer')
+		menu = m.optionMenuGrp(label='preview', cw2 = (60,80))
 
 		# loop trough slum template supported shaders.
 		previewRenderers = []
@@ -182,12 +206,15 @@ class AETemplate:
 		# ----------------------------------------------------------------------------
 		# end first line
 
+
 		# run swatchUI method of the current selected renderer
 		rendererObject = slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))]
 		if hasattr(rendererObject,'swatchUI'):
 			rendererObject.swatchUI(slumNode)
 
 		m.setParent('..')
+
+
 
 	@staticmethod
 	def parameters(slumNode):
