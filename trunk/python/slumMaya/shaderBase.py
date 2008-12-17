@@ -447,3 +447,5 @@ class shaderBase(OpenMayaMPx.MPxNode):
 				ret = ret or each.getInternalValueInContext(plugName, node, dataHandle)
 
 		return ret
+	def renderSwatchImage ( self, image ):
+		pass

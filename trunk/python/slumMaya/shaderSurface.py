@@ -29,26 +29,63 @@ import shaderBase
 
 try:
 	mayaBaseClass = OpenMayaMPx.MPxHardwareShader
+	#mayaBaseClass = OpenMayaMPx.MPxHwShaderNode 
 except:
 	mayaBaseClass = OpenMayaMPx.MPxNode
 
-class shaderSurface( shaderBase.shaderBase, mayaBaseClass ):
+class shaderSurface( mayaBaseClass  ):
+#class shaderSurface( shaderBase.shaderBase, mayaBaseClass ):
+	@staticmethod
+	def nodeInitializer():
+		'''
+			plugin initializaton method. this is needed to register a new node in maya.
+			usually, this method would handle all the initialization of parameters for the node.
+			Instead, we initialize the node in another method that is called AFTER the node
+			already exists in maya.
+			This make the whole process much simple, and if we need to update a node from a new version
+			of a slum template, we just call the same method again.
+		'''
+		pass
+	def slumInitializer():
+		'''
+			plugin initializaton method. this is needed to register a new node in maya.
+			usually, this method would handle all the initialization of parameters for the node.
+			Instead, we initialize the node in another method that is called AFTER the node
+			already exists in maya.
+			This make the whole process much simple, and if we need to update a node from a new version
+			of a slum template, we just call the same method again.
+		'''
+		pass
 	def __init__(self):
+		##OpenMayaMPx.MPxNode.__init__(self)
 		mayaBaseClass.__init__(self)
-		shaderBase.shaderBase.__init__(self)
+		#shaderBase.shaderBase.__init__(self)
+		pass
 	@staticmethod
 	def nodeCreator():
-		return OpenMayaMPx.asMPxPtr( shaderSurface() )
+		x =shaderSurface()
+		return OpenMayaMPx.asMPxPtr( x )
 
 	def render(self, geo):
 		pass
 		return True
+	def bind(  MDrawRequest, M3dView ):
+		pass
+	def unbind(  MDrawRequest, M3dView ):
+		pass
+	def geometry( MDrawRequest, M3dView, prim, writable, indexCount, indexArray,
+					vertexCount, vertexIDs, vertexArray, normalCount, normalArrays,
+					colorCount, colorArrays, texCoordCount, texCoordArrays ):
+		pass
+
+
 
 	def renderSwatchImage ( self, image ):
 		w=0
 		h=0
 		image.getSize( w, h );
-
+		print '---->',w,h
+		
 		swatch = OpenMaya.MImage();
 		if swatch.readFromFile ( '/tmp/xx.tif' ):
 			swatch.resize (w, h, false);
@@ -66,6 +103,5 @@ class shaderSurface( shaderBase.shaderBase, mayaBaseClass ):
 			image.setPixels(swatch.pixels(),w,h);
 
 		dlimage.release();
-
 
 		return True
