@@ -30,7 +30,7 @@ import shaderBase
 
 gl = OpenMayaRender.MHardwareRenderer.theRenderer().glFunctionTable()
 
-class shaderNetwork:
+class shaderNetworkRasterize:
 	def __init__(self, nodePlug, resolution=(320,200)):
 		self.resolution = resolution
 		self.w = resolution[0]
