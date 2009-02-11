@@ -2,7 +2,7 @@
 ----
 ==Alpha E released - 11/feb/2009==
 
-[http://slum.googlecode.com/files/slumAlphaD.zip alpha-d download]
+[http://slum.googlecode.com/files/slumAlphaE.zip alpha-e download]
 
 added some nice experimental ui (swatch render not working still). Red/Green light if a template on disk is different than the stored in the node.
 ----
@@ -10,7 +10,7 @@ added some nice experimental ui (swatch render not working still). Red/Green lig
 
 [http://slum.googlecode.com/files/slumAlphaD.zip alpha-d download]
 
-Alpha D. Added "update code" button in maya client to update code from disk template. 
+Added "update code" button in maya client to update code from disk template. 
 ----
 ==Alpha C released - 14/aug/2008==
 
