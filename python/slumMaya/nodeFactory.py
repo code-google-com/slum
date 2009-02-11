@@ -65,7 +65,7 @@ class nodeFactory:
 			nodeCreator 			= shaderSurface.nodeCreator
 			nodeInitializer 		= shaderSurface.nodeInitializer
 			nodeInitializeCallback 	= shaderSurface.slumInitializer
-			
+
 			'''
 			// Don't initialize swatches in batch mode
 			if (MGlobal::mayaState() != MGlobal::kBatch)
@@ -76,10 +76,10 @@ class nodeFactory:
 			}
 			'''
 			swatchName 				= ''
-			#swatchName 				= ":swatch/%s" % OpenMayaUI.MHWShaderSwatchGenerator.initialize()
-			swatchName = ":swatch/slumSwatch%s" % classe
-			OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName,
-					OpenMayaUI.MHWShaderSwatchGenerator.createObj );
+			swatchName 				= ":swatch/%s" % OpenMayaUI.MHWShaderSwatchGenerator.initialize()
+			#swatchName = ":swatch/slumSwatch%s" % classe
+			#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName,
+			#			OpenMayaUI.MHWShaderSwatchGenerator.createObj );
 
 			slumShader = slum.evalSlumClass(self.classes[classe]['code'], classe)
 

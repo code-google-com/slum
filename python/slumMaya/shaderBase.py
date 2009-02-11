@@ -28,7 +28,7 @@ from maya.mel import eval as meval
 from nodeFactory import *
 import slumMaya
 import slum
-import os, md5, textwrap
+import os, md5, textwrap, sys
 
 class AETemplate:
 	'''
@@ -298,7 +298,6 @@ class AETemplate:
 		recursiveAddAttrUI( slumNode.slum.parameters() )
 
 
-import sys
 class shaderBase(OpenMayaMPx.MPxNode):
 	'''
 		This is the base class used by slum shader nodes. Every node is initialized
@@ -308,9 +307,12 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		For light shaders, we use shaderLight class, which is derivate from this one and MPxLocatorNode
 	'''
 	slum = None
+	
 	def __init__(self):
 		''' placeholder. not used at the moment '''
+		#OpenMayaMPx.MPxNode.__init__(self)
 		pass
+
 	def compute(self, plug, dataBlock):
 		'''
 			this method is called by maya when rendering in software mode or viewport texture mode.
@@ -404,9 +406,6 @@ class shaderBase(OpenMayaMPx.MPxNode):
 	def setDependentsDirty ( self, plugBeingDirtied, affectedPlugs ):
 		sys.stderr.write('...%s...\n' %  plugBeingDirtied.name() )
 		#node = slumMaya.slumNode( self.name() )
-
-
-
 		return True
 
 	def setInternalValueInContext ( self, plug, dataHandle,  ctx ):
@@ -447,5 +446,6 @@ class shaderBase(OpenMayaMPx.MPxNode):
 				ret = ret or each.getInternalValueInContext(plugName, node, dataHandle)
 
 		return ret
+
 	def renderSwatchImage ( self, image ):
 		pass
