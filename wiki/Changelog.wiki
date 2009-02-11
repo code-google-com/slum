@@ -4,7 +4,7 @@
 
 [http://slum.googlecode.com/files/slumAlphaD.zip alpha-d download]
 
-Alpha D. 
+Alpha D. Added "update code" button in maya client to update code from disk template. 
 ----
 ==Alpha C released - 14/aug==
 
