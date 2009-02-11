@@ -138,7 +138,11 @@ class collectSlumClasses:
 
 			this class is a support class for local and online methods!
 		'''
-
+		
+		# fix txt if writen in windows
+		for n in range(len(slumCode)):
+			slumCode[n] = slumCode[n].replace('\r','')
+		
 		# keep dir() to compare with new dir() after
 		# code execution to find the new classes
 		# defined inside slum file

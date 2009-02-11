@@ -58,7 +58,7 @@ else:
 			env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
 		)
 
-	env.Alias( 'release', env.Install(installDir, 'README') )
+	env.Alias( 'release', env.Install(installDir, 'README.txt') )
 	zip = env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" )
 	env.Alias( 'release', zip )
 
