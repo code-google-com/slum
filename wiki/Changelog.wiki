@@ -1,5 +1,11 @@
 #labels Featured
 ----
+==Alpha D released - 14/aug==
+
+[http://slum.googlecode.com/files/slumAlphaD.zip alpha-d download]
+
+Alpha D. 
+----
 ==Alpha C released - 14/aug==
 
 [http://slum.googlecode.com/files/slumAlphaC.zip alpha-c download]
