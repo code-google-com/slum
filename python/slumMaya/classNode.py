@@ -266,7 +266,7 @@ class classNode(dict):
 			dict.__delitem__(self, key)
 			self.____updateToClassNode()
 		def __getitem__(self, key):
-			self.____updateFromClassNode()
+			#self.____updateFromClassNode()
 			return dict.__getitem__(self, key)
 		def __repr__(self):
 			self.____updateFromClassNode()

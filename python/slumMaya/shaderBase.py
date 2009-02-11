@@ -159,18 +159,21 @@ class AETemplate:
 			help = "Yellow light - node has being edited inside maya. If you update, you'll lose all edited code. Don't update!"
 		elif not slumNode.updated:
 			light = 'red'
-			help = "Red light - node is NOT up-to-date with original slum template. Update to bring it to the latest version!"
+			help = "Red light - node is NOT up-to-date with original slum template. Click the red light to bring it to the latest version!"
 		xpm = [
 			os.path.join(slumMaya.__path__[0],'images','%s.xpm' % light),
 			os.path.join(slumMaya.__path__[0],'images','%sSelected.xpm' % light),
 		]
 		# update button
 		def updateCode(*args):
+			if slumNode['slum']['edited']:
+				raise "If you update, you'll loose all the edit in this node."
 			m.iconTextButton( updateButtonName, e=True, image=xpm[1] )
 			shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
 			m.iconTextButton( updateButtonName, e=True, image=xpm[0] )
 			m.select(cl=True)
 			m.select(slumNode.node)
+			slumNode['slum']['edited'] = False
 		m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = help )
 
 		# edit button
@@ -362,7 +365,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		# evaluate the slumClass
 		classCache = slum.collectSlumClasses( refresh=forceRefresh )
 
-		nodeTypeName = self.typeName().strip('slum_')
+		nodeTypeName = self.typeName().replace('slum_','')
 		if not refreshNodeOnly:
 			# find slumclass name, get the data from classCache and store in the slum key of the node (string parameter)
 			node['slum'] = classCache.allClasses[nodeTypeName]
