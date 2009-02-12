@@ -1,0 +1,85 @@
+
+class simpleSSS(slumSurface):
+	def ID(self):
+		'''
+			a unique ID that identifys the shader inside slum. If you upload
+			this template to a online repository, this method will be replaced
+			automatically by the repository server, with the next global available ID.
+		'''
+		return 100
+
+	def parameters(self):
+		'''
+			This method defines all the parameter for our shader template. Keep in mind that here you define
+			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+			defines.
+		'''
+		
+		Ks = parameter( 0.7, 'Ks', help = 'Scatering Specular.', max = 10, min = 0 ) 
+		Kd = parameter( 0.6, 'Kd', help = 'Scatering Difuse.', max = 10, min = 0 )
+		Ka = parameter( 0.1, 'Ka', help = 'Scaterin Specular.', max = 10, min = 0 )
+		Roughness = parameter( 0.4, 'Roughness', help = 'Scaterin Specular Roughness. ', max = 10, min = 0 )
+		OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			Ks,
+			Kd,
+			Ka,
+			Roughness,
+		], name = 'Simple SSS' )
+
+
+	def delight(self, node):
+		'''
+			delight method is were you define the code for this shader, when rendering in 3delight.
+			this is a renderer method. a renderer method should allways return a tupple as:
+			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
+		'''
+		# 3deligth shader parameters
+		shaderPars = [
+			'float Ks 	= %f;'	% node['Ks'],
+			'float Kd 	= %f;'	% node['Kd'],
+			'float Ka 	= %f;'	% node['Ka'],
+			'float Roughness 	= %f;'	% node['Roughness'],
+			
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+				extern normal N;
+				extern point P;
+				extern vector I;
+				normal Nn = normalize(N);
+				normal Nf = faceforward(Nn, I);
+				vector V = normalize(-I);
+
+				uniform string raytype = "unknown";
+	
+				rayinfo( "type", raytype );
+
+				if( raytype == "subsurface" )
+				{
+				outColor = Ka*ambient() + Kd*diffuse(Nn);
+				
+				}
+				else
+				{
+				outColor = subsurface(P) + Ks * specular(Nf, V, Roughness);	
+				
+				}
+
+			
+			''']
+
+		# return a tupple
+		return (shaderPars, code)
+
+	def cgfx(self, node):
+		code=['''
+		''']
+		return ("",code)
