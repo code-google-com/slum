@@ -95,3 +95,10 @@ class normal(vector):
 		its exactly like vector. Its defined just as a placeholder for people used to rsl. (like me :D)
 	'''
 	pass
+
+class point(vector):
+	'''
+		slum datatype to hold point data.
+		its exactly like vector. Its defined just as a placeholder for people used to rsl. (like me :D)
+	'''
+	pass

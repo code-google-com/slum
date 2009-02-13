@@ -63,10 +63,11 @@ class classNode(dict):
 				m.addAttr( self.node, ln=key,  at='bool', hidden=hidden )
 			elif t == str:
 				m.addAttr( self.node, ln=key,  dt='string', hidden=hidden )
-			elif t in [vector, normal, color]:
+			elif t in [vector, normal, color, point]:
 				isColor = False
 				dataTypes={
 					vector: ['X','Y','Z'],
+					point:  ['PX','PY','PZ'],
 					normal: ['NX','NY','NZ'],
 					color:  ['R','G','B'],
 				}
@@ -84,7 +85,7 @@ class classNode(dict):
 		t = item.__class__.__name__
 		if t=='str':
 			m.setAttr( self.attr(key), item,  type="string" )
-		elif t in ['vector', 'normal', 'color']:
+		elif t in ['vector', 'normal', 'color', 'point']:
 			m.setAttr( self.attr(key), item[0], item[1], item[2], type="double3" )
 		elif t in ['dict','_dict','list','tuple']: #handle dict/list/tuple as special string data that will be retrieve as python dict/list/tuple
 			m.setAttr( self.attr(key), "%s/%s" % (item.__class__.__name__,str(item)), type="string" )
@@ -110,6 +111,8 @@ class classNode(dict):
 		elif t in [list]:
 			if m.objExists( "%sX" % self.attr(key) ):
 				ret = vector(value[0][0], value[0][1], value[0][2])
+			elif m.objExists( "%sPX" % self.attr(key) ):
+				ret = point(value[0][0], value[0][1], value[0][2])
 			elif m.objExists( "%sNX" % self.attr(key) ):
 				ret = normal(value[0][0], value[0][1], value[0][2])
 			elif m.objExists( "%sR" % self.attr(key) ):
@@ -181,7 +184,7 @@ class classNode(dict):
 		ret=[key]
 		if self.__getitem__(key).__class__.__name__ in ['color']:
 			ret.extend(['%sR' % key,'%sG' % key,'%sB' % key])
-		elif self.__getitem__(key).__class__.__name__ in ['vector','normal']:
+		elif self.__getitem__(key).__class__.__name__ in ['vector','normal','point']:
 			ret.extend(['%sX' % key,'%sY' % key,'%sZ' % key])
 		return ret
 

@@ -41,6 +41,9 @@ class testUI(slumSurface):
 		Color 		= parameter( color(1), 'Color', help = 'Color of the diffuse surface.' )
 		test 		= parameter( 1, 'testPopup', help = 'testing popup.', ui=ui.popup({'test1':1,'test2':2}) )
 		test2 		= parameter( 1, 'testCheckBox', help = 'testing checkbox.', ui=ui.checkbox() )
+		pointPar	= parameter( point(0), 'pointParameter', help = 'testing point.' )
+		vectorPar	= parameter( vector(0), 'vectorParameter', help = 'testing vector.' )
+		normalPar	= parameter( normal(0), 'normalParameter', help = 'testing normal.' )
 
 		def buttonTest(*args):
 			print 'buummmm',args
@@ -53,16 +56,19 @@ class testUI(slumSurface):
 		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
 		return  group( [
-			Intensity,
-			Color,
-			test,
-			test2,
-			test3,
-			test4,
-			#test5,
-			OutColor,
-			OutTransparency
-		], name = 'Simple Diffuse Shader' )
+				Intensity,
+				Color,
+				test,
+				test2,
+				test3,
+				test4,
+				#test5,
+				pointPar,
+				vectorPar,
+				normalPar,
+				OutColor,
+				OutTransparency
+		], name = 'Simple TestUI Shader' )
 
 
 	def delight(self, node):
