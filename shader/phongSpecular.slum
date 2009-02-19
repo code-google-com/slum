@@ -1,0 +1,79 @@
+#
+#   phongSpecular.slum - a simple phong specular model
+#
+#	Author: Andre de Souza - feb/2009
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class phongSpecular(slumSurface):
+	def ID(self):
+		return 110
+
+	def parameters(self):
+		'''
+			This method defines all the parameter for our shader template. Keep in mind that here you define
+			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+			defines.
+		'''
+		Ks 	= parameter( 1.0, 'Ks', help = 'Ks.', max = 10, min = 0 )
+		roughness 	= parameter( 0.1, 'roughness', help = 'Diffuse intensity.', max = 10, min = 0 )
+		coloration 		= parameter( color(1), 'coloration', help = 'Color for the specular.' )
+
+		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			Ks,
+			roughness,
+			coloration,
+		], name = 'PhongSpecular' )
+
+
+	def delight(self, node):
+		# 3deligth shader parameters
+		shaderPars = [
+			'float Ks 			= %f;'	% node['Ks'],
+			'float roughness 	= %f;'	% node['roughness'],
+			'color coloration	= %s;'	% node['coloration'],
+			'shader_output varying color _PHONGSPECULAR=0;',
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+			extern normal N;
+			extern vector I;
+			vector NN = normalize(N);
+			vector II = normalize(I);
+			normal Nf 		= faceforward(NN, II, NN);
+			vector V 		= -II;
+			outColor 		= coloration * (Ks * phong(Nf,V,1/roughness));
+			_PHONGSPECULAR 	= outColor;
+			''']
+
+		# return a tupple
+		return (shaderPars, code)
+
+	def cgfx(self, node):
+		code=['''
+		''']
+		return ("",code)
