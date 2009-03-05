@@ -1,1 +1,2 @@
-<wiki:gadget url="http://arbigadgets.googlepages.com/simple_rss.xml" height="600" width="800" up_feedurl=http://code.google.com/feeds/p/slum/svnchanges/basic up_entries=1000 up_summaries=200 border=0> 
+
+<wiki:gadget url="http://1o4.jp/google/module/slim-reader.xml" up_contentsnum=100 width=800 height=600 up_mfeed="http://code.google.com/feeds/p/slum/svnchanges/basic"/>
