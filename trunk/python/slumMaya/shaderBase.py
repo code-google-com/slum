@@ -226,6 +226,12 @@ class AETemplate:
 			The UI is based in the data returned from the parameters method of
 			the slum class associated with the node.
 		'''
+		
+		# overrides template clientRefresh method to allow callbacks in the template to
+		# trigger a UI refresh in Maya
+		def refresh():
+			AETemplate.customUIHeader(slumNode.node)
+		slumNode.slum.clientRefresh = refresh
 
 		# this garantees the layout will be rebuild properly everytime
 		# the attribute editor is open/selected for a node.
@@ -235,70 +241,73 @@ class AETemplate:
 
 		# a recursive function to create our UI. perfect for hierarquical parameters
 		def recursiveAddAttrUI( parameter ):
-			if parameter.__class__.__name__ == 'group':
-				m.frameLayout( label = parameter.name, collapse = not parameter.opened )
-				m.columnLayout( visible=True, adjustableColumn=True )
-
-				for each in parameter.value:
-					recursiveAddAttrUI( each )
-
-				m.setParent('..')
-				m.setParent('..')
-
-			elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
-				m.button( l = parameter.name, c = parameter.callback )
-			elif parameter.__class__.__name__ == 'parameter':
-				if not parameter.output:
-					attribute = "%s.%s" % (slumNode.node, parameter.name)
-					help = textwrap.fill(parameter.help,100)
-					type = parameter.value.__class__.__name__
-					value = parameter.value
-
-					# custom UI
-					if parameter.ui.__class__.__name__ == 'popup':
-						popup=parameter.ui.values
-						menu = m.optionMenuGrp( label=parameter.name )
-						defaulValue=popup.keys()[0]
-						for each in popup.keys():
-							m.menuItem( label = each, data = popup[each] )
-							if popup[each]==value:
-								defaulValue = each
-						m.optionMenuGrp( menu, edit=True, value=defaulValue, annotation=help )
-						m.connectControl( menu, attribute, index=2)
-
-					elif parameter.ui.__class__.__name__ == 'checkbox':
-						checkbox = m.checkBoxGrp( numberOfCheckBoxes=1, label=parameter.name, annotation=help  )
-						m.connectControl( checkbox, attribute, index=2)
-
-					# normal parameters
-					elif  type in ['float','int']:
-						value=value
-						min=parameter.min
-						max=parameter.max
-						m.attrFieldSliderGrp(
-							sliderMinValue=parameter.min,
-							sliderMaxValue=parameter.max,
-							fmn=-100000000, fmx=10000000,
-							attribute=attribute,
-							label=parameter.name,
-							annotation=help
-						)
-
-					elif type == 'str':
-						ui=m.textFieldGrp( label=parameter.name, annotation=help )
-						m.connectControl( ui, attribute, index=2)
-
-					elif type == 'color':
-						m.attrColorSliderGrp( attribute=attribute, label=parameter.name, annotation=help )
-
-					else: # vectors/normals
-						nameUI = '__%sUI' % parameter.name
-						m.floatFieldGrp( nameUI, l=parameter.name, numberOfFields=3, annotation=help )
-						m.connectControl( nameUI, '%sX' % attribute, index=2 )
-						m.connectControl( nameUI, '%sY' % attribute, index=3 )
-						m.connectControl( nameUI, '%sZ' % attribute, index=4 )
-
-		recursiveAddAttrUI( slumNode.slum.parameters() )
+			if not parameter.hidden:
+				if   parameter.__class__.__name__ == 'group' :
+					m.frameLayout( label = parameter.name, collapse = not parameter.opened )
+					m.columnLayout( visible=True, adjustableColumn=True )
+	
+					for each in parameter.value:
+						recursiveAddAttrUI( each )
+	
+					m.setParent('..')
+					m.setParent('..')
+	
+				elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
+					m.button( l = parameter.name, c = parameter.callback )
+				elif parameter.__class__.__name__ == 'parameter':
+					if not parameter.output:
+						attribute = "%s.%s" % (slumNode.node, parameter.name)
+						help = textwrap.fill(parameter.help,100)
+						type = parameter.value.__class__.__name__
+						value = parameter.value
+	
+						# custom UI
+						if parameter.ui.__class__.__name__ == 'popup':
+							popup=parameter.ui.values
+							menu = m.optionMenuGrp( label=parameter.name )
+							keyz = popup.keys()
+							keyz.sort()
+							defaulValue=keyz[0]
+							for each in keyz:
+								m.menuItem( label = each, data = popup[each] )
+								if popup[each]==value:
+									defaulValue = each
+							m.optionMenuGrp( menu, edit=True, value=defaulValue, annotation=help )
+							m.connectControl( menu, attribute, index=2)
+	
+						elif parameter.ui.__class__.__name__ == 'checkbox':
+							checkbox = m.checkBoxGrp( numberOfCheckBoxes=1, label=parameter.name, annotation=help  )
+							m.connectControl( checkbox, attribute, index=2)
+	
+						# normal parameters
+						elif  type in ['float','int']:
+							value=value
+							min=parameter.min
+							max=parameter.max
+							m.attrFieldSliderGrp(
+								sliderMinValue=parameter.min,
+								sliderMaxValue=parameter.max,
+								fmn=-100000000, fmx=10000000,
+								attribute=attribute,
+								label=parameter.name,
+								annotation=help
+							)
+	
+						elif type == 'str':
+							ui=m.textFieldGrp( label=parameter.name, annotation=help )
+							m.connectControl( ui, attribute, index=2)
+	
+						elif type == 'color':
+							m.attrColorSliderGrp( attribute=attribute, label=parameter.name, annotation=help )
+	
+						else: # vectors/normals
+							nameUI = '__%sUI' % parameter.name
+							m.floatFieldGrp( nameUI, l=parameter.name, numberOfFields=3, annotation=help )
+							m.connectControl( nameUI, '%sX' % attribute, index=2 )
+							m.connectControl( nameUI, '%sY' % attribute, index=3 )
+							m.connectControl( nameUI, '%sZ' % attribute, index=4 )
+	
+		recursiveAddAttrUI( slumNode.slum.parameters( ) )
 
 
 class shaderBase(OpenMayaMPx.MPxNode):
@@ -354,7 +363,6 @@ class shaderBase(OpenMayaMPx.MPxNode):
 			so we can use this to dinamicaly add the shader attributes.
 			Also, this same method can be called to update the node if the class code changes.
 		'''
-
 		self = OpenMaya.MFnDependencyNode(object)
 		node = slumMaya.slumNode(self.name())
 
@@ -371,7 +379,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 			node['slum'] = classCache.allClasses[nodeTypeName]
 		else:
 			path = classCache.allClasses[nodeTypeName]['path']
-			node['slum'] = classCache._registerSlumFile( open(path).readlines(), path )[nodeTypeName]
+			node['slum'] = classCache.readSlumFile( path )[nodeTypeName]
 
 		# re-initialize now that the slum key is in place
 		node = slumMaya.slumNode(self.name())

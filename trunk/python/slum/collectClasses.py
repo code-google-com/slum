@@ -29,6 +29,12 @@ import os, glob, md5
 defaultSearchPath = 'SLUM_SEARCH_PATH'
 defaultOnlineRepositorie = 'http://slum.hradec.com/repositorie'
 
+def _readSlumFile(path):
+	slumCode = open(path).readlines()
+	# fix txt if writen in windows
+	for n in range(len(slumCode)):
+		slumCode[n] = slumCode[n].replace('\r','')
+	return slumCode
 
 
 def evalSlumClass(code, classeName):
@@ -45,11 +51,11 @@ def getMD5(code):
 	'''
 	return md5.md5( code ).digest()
 
-def checkMD5(md5, file):
+def checkMD5(md5data, file):
 	'''
 		check if the md5 matchs the md5 of a source file
 	'''
-	return md5 == getMD5( ''.join(open(file).readlines()) )
+	return md5data == getMD5( ''.join( _readSlumFile(file) ) )
 
 class collectSlumClasses:
 	'''
@@ -129,7 +135,7 @@ class collectSlumClasses:
 		onlineClasses = self.online()
 		print 'slum: all done.'
 		return ( localClasses, onlineClasses )
-
+		
 	def _registerSlumFile(self, slumCode, path):
 		'''
 			based on a string with slum code on it, registers all class names in it into a temp db
@@ -139,9 +145,6 @@ class collectSlumClasses:
 			this class is a support class for local and online methods!
 		'''
 		
-		# fix txt if writen in windows
-		for n in range(len(slumCode)):
-			slumCode[n] = slumCode[n].replace('\r','')
 		
 		# keep dir() to compare with new dir() after
 		# code execution to find the new classes
@@ -178,6 +181,9 @@ class collectSlumClasses:
 			returns data in the same format as local
 		'''
 		return {}
+		
+	def readSlumFile(self, path):
+		return self._registerSlumFile( _readSlumFile(path), path )
 
 	def local(self):
 		'''
@@ -195,6 +201,6 @@ class collectSlumClasses:
 				env = os.environ[searchPath]
 				for path in env.split(os.path.pathsep):
 					for each in glob.glob( os.path.join( path, '*.slum' ) ):
-						slumClasses.update( self._registerSlumFile( open(each).readlines(), each ) )
+						slumClasses.update( self.readSlumFile(each) )
 
 		return slumClasses

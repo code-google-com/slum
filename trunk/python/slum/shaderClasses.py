@@ -63,6 +63,9 @@ class slum:
 	def __init__(self):
 		''' placeholder. No use for this method yet '''
 		pass
+	def clientRefresh(self):
+		''' placeholder. Clients will override this at runtime to allow template to refresh client UI '''
+		pass
 	def upload(self):
 		''' upload template to online repository. It will be called by the client when the user wants to submit a template to the online repository.'''
 		pass

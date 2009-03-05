@@ -42,6 +42,9 @@ class slumNode(classNode):
 	def evalSlumClass(self):
 		if self.classe:
 			self.slum = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+			self.slumParameters = self.slum.parameters()
+			
+			# check if file md5 matches the one stored in the node.
 			self.updated = slum.checkMD5(self.classe['md5'], self.classe['path'])
 		
 
