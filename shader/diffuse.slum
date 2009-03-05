@@ -69,7 +69,7 @@ class diffuse(slumSurface):
 		code=['''
 				extern normal N;
 				extern point P;
-				outColor = diffuse(normalize(N)) * Color;
+				outColor = diffuse(normalize(N)) * Color * Intensity;
 			''']
 
 		# return a tupple

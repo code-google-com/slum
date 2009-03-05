@@ -21,7 +21,7 @@
 # ---------------------------------------------------------------------------
 
 class parameter:
-	def __init__(self, value, name, help='No Help available', max=1, min=0, output=False, ui=None, callback=None):
+	def __init__(self, value, name, help='No Help available', max=1, min=0, output=False, ui=None, callback=None, hidden=False):
 		self.name	 	= name
 		self.help	 	= help
 		self.max	 	= max
@@ -30,22 +30,31 @@ class parameter:
 		self.output		= output
 		self.value  	= value
 		self.callback 	= callback
+		self.hidden 	= hidden
 
 class group:
-	def __init__(self, value, name, help='No Help available', opened=True):
+	def __init__(self, value, name, help='No Help available', opened=True, hidden=False):
 		self.name 	= name
 		self.help 	= help
 		self.opened = opened
 		self.value  = value
+		self.hidden = hidden
+
+class uiBase:
+	def __init__(self, hidden=False ):
+		self.hidden = hidden
 
 class ui:
-	class  popup:
-		def __init__(self, values = {'yes':True, 'no':False} ):
+	class  popup( uiBase ):
+		def __init__(self, values = {'yes':True, 'no':False}, hidden=False ):
+			uiBase.__init__(self, hidden)
 			self.values = values
-	class checkbox:
-		def __init__(self):
+	class checkbox( uiBase ):
+		def __init__(self, hidden=False):
+			uiBase.__init__(self, hidden)
 			pass
-	class button:
-		def __init__(self,callback, name=''):
+	class button( uiBase ):
+		def __init__(self,callback, name='', hidden=False):
+			uiBase.__init__(self, hidden)
 			self.name		= name
 			self.callback	= callback

@@ -56,10 +56,12 @@ class delight:
 		node['shadingParameters'] = ""
 		node.setHidden('shadingParameters', True)
 		node.setInternal('shadingParameters', True)
+		node.setStorable('shadingParameters', False) # fixes crashing when saving
 
 		node['shadingCode'] = ""
 		node.setHidden('shadingCode', True)
 		node.setInternal('shadingCode', True)
+		node.setStorable('shadingCode', False) # fixes crashing when saving
 
 	@staticmethod
 	def setInternalValueInContext(plugName, node, dataHandle):
@@ -94,10 +96,10 @@ class delight:
 			# ====================================================================================================
 			# hack to allow slum to work with 3delight 7.0.0 version
 			# must remove after new public is available
-			if plugName == 'shadingParameters':
-				zcode = []
-				for line in delightShader[ dlParameters.index(plugName) ]:
-					zcode.append(line.split('=')[0]) # just use text before the '=' character, if any
+			#if plugName == 'shadingParameters':
+			#	zcode = []
+			#	for line in delightShader[ dlParameters.index(plugName) ]:
+			#		zcode.append(line.split('=')[0]) # just use text before the '=' character, if any
 			# ====================================================================================================
 			code = '\n'.join( zcode ).replace('\t',' ')
 			dataHandle.setString( code )
@@ -132,6 +134,7 @@ class delight:
 	@staticmethod
 	def _imageControlName(node):
 		return "__delightPreviewImageID_%s" % node.node
+	
 	def _translateShader(self, compile=True):
 		delete	= []
 		type 	= 'surface'
