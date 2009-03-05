@@ -1,0 +1,1 @@
+<wiki:gadget url="http://customrss.googlepages.com/customrss.xml" height="600" width="800" up_rssurl="http://code.google.com/feeds/p/slum/svnchanges/basic/" up_title="ChangeLog"> 
