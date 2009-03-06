@@ -1,5 +1,5 @@
 #labels Featured,Phase-Implementation
-<wiki:gadget url="http://www.centersoflight.org/support/iframe_forever/iframe_forever.xml" width=100% height=1200 up_myname="Slum Documentation" up_myurl="http://hradec.com/slum/doc/index.html" up_mywidth="100%" up_myheight="800" up_myalign=center />
+<wiki:gadget url="http://www.centersoflight.org/support/iframe_forever/iframe_forever.xml" width=100% height=100% up_myname="Slum Documentation" up_myurl="http://hradec.com/slum/doc/index.html" up_mywidth="100%" up_myheight="800" up_myalign=center />
 
 
 ----
