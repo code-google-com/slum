@@ -1,5 +1,5 @@
 #labels Featured,Phase-Implementation
-<wiki:gadget url="http://hosting.gmodules.com/ig/gadgets/file/110543442524307353585/include-gadget.xml" up_pref_url="http://hradec.com/slum/doc/index.html" width=800 height=600 up_pref_height=600 />
+<wiki:gadget url="http://hosting.gmodules.com/ig/gadgets/file/110543442524307353585/include-gadget.xml" up_pref_url="http://hradec.com/slum/doc/index.html" width=100% height=1200 up_pref_height=1200 />
 
 
 ----
