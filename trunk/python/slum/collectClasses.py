@@ -41,9 +41,21 @@ def evalSlumClass(code, classeName):
 	'''
 		execute "code" string, and returns the class object for "classeName"
 	'''
-	exec 'from slum import *' in globals()
-	exec code in globals()
-	return eval('%s()' % classeName)
+	
+	ret = ''
+	newCode  = 'import traceback\n'
+	newCode += 'from slum import *\n'
+	newCode += 'try:\n'
+	newCode += code.replace('\n','\n\t')
+	newCode += '\nexcept:\n'
+	newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
+	#print newCode
+	print 'bummmm'
+	exec newCode in globals()
+	print 'bummmm2'
+	ret = eval('%s()' % classeName)
+	print 'bummmm3'
+	return ret
 
 def getMD5(code):
 	'''

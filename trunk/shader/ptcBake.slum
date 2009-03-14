@@ -1,0 +1,45 @@
+
+
+
+class ptcBake(slumSurface):
+	def ID(self):
+		return 112
+
+	def parameters(self):
+		return  group( [
+			parameter( 1, 						'bakePTC'	, ui=ui.checkbox() ),
+			parameter( '<project>/data/<scene>.ptc', 		'file' 		),
+			parameter( 'world', 				'coordsys'	),
+
+			parameter( color(1), 'outColor', output=True ), 	   # required for 3delight surface shaders
+			parameter( color(0), 'outTransparency', output=True ), # required for 3delight surface shaders
+		], name = 'Bake a PTC' )
+
+
+
+	def delight(self, node):
+		# 3deligth shader parameters
+		shaderPars = [
+			'string file = "%s";' % node['file'],
+			'string coordsys = "%s";' % node['coordsys'],
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		# base variables
+		code=['''
+			extern color Cs;
+			outColor = color(0,0,1);
+		''']
+		if node['bakePTC']:
+			code.append('''
+				extern point P;
+				extern normal N;
+				bake3d( file, "", P, N,	"coordsystem", coordsys, "interpolate", 1 );
+			''')
+
+		# return a tupple
+		return (shaderPars, code)
+
