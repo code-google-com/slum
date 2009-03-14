@@ -1,0 +1,191 @@
+#
+# diffuse.slum - a simple diffuse slum surface shader to be used by
+#				 developers as a template shader.
+#
+#    Copyright (C) 2008 - Roberto Hradec
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class lafortune(slumSurface):
+	def ID(self):
+		'''
+			a unique ID that identifys the shader inside slum. If you upload
+			this template to a online repository, this method will be replaced
+			automatically by the repository server, with the next global available ID.
+		'''
+		return 113
+
+	def parameters(self):
+		'''
+			This method defines all the parameter for our shader template. Keep in mind that here you define
+			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+			defines.
+		'''
+		Ks	= parameter( 1.0, 'Ks', help = 'Multiplyer for the lafortune coefficiets.', max = 100, min = 0 )
+		surfaceColor	= parameter( color(0.136372, 0.095920, 0.105378), 'surfaceColor', help = 'Color for the surface.' )
+
+		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			surfaceColor,
+			Ks,
+			
+		], name = 'lafortune' )
+
+
+	def delight(self, node):
+		'''
+			delight method is were you define the code for this shader, when rendering in 3delight.
+			this is a renderer method. a renderer method should allways return a tupple as:
+			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
+		'''
+		# 3deligth shader parameters
+		shaderPars = [
+			'float Ks 	= %f;'	% node['Ks'],
+			'color surfaceColor		= %s;'	% node['surfaceColor'],
+			'shader_output varying color _LAFORTUNE=0;',
+			
+			'uniform string texturename = "";',
+			
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+			/* Number of coefficients per lobe: 3 for an isotropic surface */
+			#define LOBESIZE 3
+			/* Number of wavelengths (wired in) */
+			#define N_WAVES 3
+			/* Number of lobes (wired in) */
+			#define Nlobes 3
+
+			#define COEFFLEN (LOBESIZE*N_WAVES*Nlobes)
+
+			/* Default BRDF: flat blue paint */
+			/* Use "Color  [ .3094 .39667 .70837 ]" for consistency with default */
+				uniform float coeff[27] ={ -1.131747, -1.209182, 6.421658,
+								-1.016939, -1.462488, 3.699932,
+								-0.966018, -1.222419, 3.524889,
+								-0.546570,  0.380123, 3.685044,
+								-0.643533,  0.410559, 4.266495,
+								-0.638934,  0.437367, 4.539742,
+								-1.020153,  0.703913, 63.919687,
+								-1.027479,  0.573625, 43.809866,
+								-0.998888,  0.857998, 64.208486};
+			uniform float colormatrix[9] =	{ 1.063302,0.382044, -0.445346, -0.298125,  1.667665, -0.369540,-1.322302, -0.446321,  2.768624 };
+			extern vector L;
+			extern color Cl;
+			extern color Cs;
+			extern color Os;
+			extern point P;
+			extern vector dPdu;
+			extern vector dPdv;
+			extern normal N;
+			extern normal Ng;
+			extern vector L;
+			extern color Cl;
+			extern color Ol;
+			extern vector I;
+			extern point E;
+			extern float ncomps;
+			
+			varying vector local_z;
+			varying vector local_x, local_y;	 /* Unit vector in "u" and "v" directions */
+			varying vector V;                      /* Normalized eye vector */
+			varying vector Ln;                     /* Normalized vector to light */
+			varying float x, z, f;	 /* subterms */
+			varying float fr, fg, fb;	 /* RGB components of the non-Lambertian term */
+			uniform float basepointer, j;	 /* loop counters */
+
+			/* Get unit vector in "u" parameter direction */
+			local_x = normalize ( dPdu );
+			  
+			local_z = faceforward (normalize(N), I);
+			V = normalize (I);
+			  
+			/* Get a local coordinate system. */
+			local_y = local_z^local_x;
+			
+			/* The first term is the diffuse component. This should be the
+			   diffuse component in the Lafortune model multiplied by pi. */
+			  
+			if ( texturename == "" )
+			  outColor = (diffuse(local_z) + ambient())*surfaceColor;
+						else
+			  outColor = (diffuse(local_z) + ambient()) * color texture (texturename);
+			  
+			illuminance ( P, local_z, 1.57079632679489661923 /* Hemisphere */ ) {
+			  Ln = normalize ( L );
+			  /* Compute the terms
+				 x = x_in * x_view  +  y_in * y_view
+				 z = z_in * z_view
+			  */
+			  x = local_x.V * local_x.Ln + local_y.V * local_y.Ln;
+			  z = - ( local_z.V * local_z.Ln );
+			  
+			  /* Coefficient structure:
+				 for each lobe of Nlobes:
+				for each channel of N_WAVES:
+				  cxy, cz, n
+				 where cxy, cz are the directional and scale components
+				   n is the exponent for the cosine
+			  */
+			  
+			  for ( basepointer=0;
+				basepointer<COEFFLEN;
+				basepointer += LOBESIZE * N_WAVES ) {
+				uniform float rexponent = coeff[basepointer+2],
+				  gexponent = coeff[basepointer+LOBESIZE+2],
+				  bexponent = coeff[basepointer+2*LOBESIZE+2];
+				fr = fg = fb = 0.0;
+				f = -x * coeff[basepointer] + z * coeff[basepointer+1];
+				if ( f > 0.001*rexponent )
+				  fr = pow ( f, rexponent ) ;
+				f = -x * coeff[basepointer+LOBESIZE]
+				+ z * coeff[basepointer+LOBESIZE+1];
+				if ( f > 0.001*gexponent )
+				  fg = pow ( f, gexponent ) ;
+				f = -x * coeff[basepointer+2*LOBESIZE]
+				+ z * coeff[basepointer+2*LOBESIZE+1];
+				if ( f > 0.001*bexponent )
+				  fb = pow ( f, bexponent ) ;
+				outColor += ( Cl * color "rgb" ( fr, fg, fb ) ) *  (local_z.Ln);
+			  }
+			}
+			  
+			/* Color correction from camera space */
+			/* use dot product with rows of matrix */
+			fr = colormatrix[0]*comp(outColor,0)
+			  + colormatrix[1]*comp(outColor,1) + colormatrix[2]*comp(outColor,2);
+			fg = colormatrix[3]*comp(outColor,0)
+			  + colormatrix[4]*comp(outColor,1) + colormatrix[5]*comp(outColor,2);
+			fb = colormatrix[6]*comp(outColor,0)
+			  + colormatrix[7]*comp(outColor,1) + colormatrix[8]*comp(outColor,2);
+			outColor = (color "rgb" ( fr, fg, fb ))*Ks;
+			_LAFORTUNE = outColor;
+			
+				
+			''']
+
+		# return a tupple
+		return (shaderPars, code)
+

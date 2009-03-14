@@ -30,6 +30,9 @@ import slumMaya
 import slum
 import os, md5, textwrap, sys
 
+global AETemplateCache
+AETemplate={}
+
 class AETemplate:
 	'''
 		This class initialize an AETemplate for a given nodetype dinamycally.
@@ -51,18 +54,30 @@ class AETemplate:
 		self.nodeType = nodeType
 
 	@staticmethod
+	def _layoutExists(layoutName, type):
+		'''
+			checks for the existence of a layout with the given layoutName, of type "type"
+			and deletes it, if it exists.
+			Used to delete the framelayout of our template.
+		'''
+		ret = False
+		parent = m.setParent(query=True)
+		children = m.layout( parent, q=True, ca=True, )
+		if children!=None:
+			for child in children:
+				if m.objectTypeUI( child, isType=type ) and child==layoutName:
+					ret=True
+		return ret
+
+	@staticmethod
 	def _deleteLayoutIfExists(layoutName, type):
 		'''
 			checks for the existence of a layout with the given layoutName, of type "type"
 			and deletes it, if it exists.
 			Used to delete the framelayout of our template.
 		'''
-		parent = m.setParent(query=True)
-		children = m.layout( parent, q=True, ca=True, )
-		if children!=None:
-			for child in children:
-				if m.objectTypeUI( child, isType=type ) and child==layoutName:
-					m.deleteUI( layoutName, layout=True );
+		if AETemplate._layoutExists(layoutName, type):
+			m.deleteUI( layoutName, layout=True );
 
 	@staticmethod
 	def template(nodeName):
@@ -157,7 +172,7 @@ class AETemplate:
 		if slumNode['slum']['edited']:
 			light = 'yellow'
 			help = "Yellow light - node has being edited inside maya. If you update, you'll lose all edited code. Don't update!"
-		elif not slumNode.updated:
+		elif not slumNode.updated():
 			light = 'red'
 			help = "Red light - node is NOT up-to-date with original slum template. Click the red light to bring it to the latest version!"
 		xpm = [
@@ -235,79 +250,83 @@ class AETemplate:
 
 		# this garantees the layout will be rebuild properly everytime
 		# the attribute editor is open/selected for a node.
-		layoutName = "layoutID_%s" % m.nodeType(slumNode.node)
+		#layoutName = "layoutID_%s" % m.nodeType(slumNode.node)
+		layoutName = "layoutID_%s" % slumNode.node
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
-		m.columnLayout( layoutName, visible=True, adjustableColumn=True )
-
-		# a recursive function to create our UI. perfect for hierarquical parameters
-		def recursiveAddAttrUI( parameter ):
-			if not parameter.hidden:
-				if   parameter.__class__.__name__ == 'group' :
-					m.frameLayout( label = parameter.name, collapse = not parameter.opened )
-					m.columnLayout( visible=True, adjustableColumn=True )
+		
+		if not AETemplate._layoutExists(layoutName, 'columnLayout'):
+			
+			m.columnLayout( layoutName, visible=True, adjustableColumn=True )
 	
-					for each in parameter.value:
-						recursiveAddAttrUI( each )
-	
-					m.setParent('..')
-					m.setParent('..')
-	
-				elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
-					m.button( l = parameter.name, c = parameter.callback )
-				elif parameter.__class__.__name__ == 'parameter':
-					if not parameter.output:
-						attribute = "%s.%s" % (slumNode.node, parameter.name)
-						help = textwrap.fill(parameter.help,100)
-						type = parameter.value.__class__.__name__
-						value = parameter.value
-	
-						# custom UI
-						if parameter.ui.__class__.__name__ == 'popup':
-							popup=parameter.ui.values
-							menu = m.optionMenuGrp( label=parameter.name )
-							keyz = popup.keys()
-							keyz.sort()
-							defaulValue=keyz[0]
-							for each in keyz:
-								m.menuItem( label = each, data = popup[each] )
-								if popup[each]==value:
-									defaulValue = each
-							m.optionMenuGrp( menu, edit=True, value=defaulValue, annotation=help )
-							m.connectControl( menu, attribute, index=2)
-	
-						elif parameter.ui.__class__.__name__ == 'checkbox':
-							checkbox = m.checkBoxGrp( numberOfCheckBoxes=1, label=parameter.name, annotation=help  )
-							m.connectControl( checkbox, attribute, index=2)
-	
-						# normal parameters
-						elif  type in ['float','int']:
-							value=value
-							min=parameter.min
-							max=parameter.max
-							m.attrFieldSliderGrp(
-								sliderMinValue=parameter.min,
-								sliderMaxValue=parameter.max,
-								fmn=-100000000, fmx=10000000,
-								attribute=attribute,
-								label=parameter.name,
-								annotation=help
-							)
-	
-						elif type == 'str':
-							ui=m.textFieldGrp( label=parameter.name, annotation=help )
-							m.connectControl( ui, attribute, index=2)
-	
-						elif type == 'color':
-							m.attrColorSliderGrp( attribute=attribute, label=parameter.name, annotation=help )
-	
-						else: # vectors/normals
-							nameUI = '__%sUI' % parameter.name
-							m.floatFieldGrp( nameUI, l=parameter.name, numberOfFields=3, annotation=help )
-							m.connectControl( nameUI, '%sX' % attribute, index=2 )
-							m.connectControl( nameUI, '%sY' % attribute, index=3 )
-							m.connectControl( nameUI, '%sZ' % attribute, index=4 )
-	
-		recursiveAddAttrUI( slumNode.slum.parameters( ) )
+			# a recursive function to create our UI. perfect for hierarquical parameters
+			def recursiveAddAttrUI( parameter ):
+				if not parameter.hidden:
+					if   parameter.__class__.__name__ == 'group' :
+						m.frameLayout( label = parameter.name, collapse = not parameter.opened )
+						m.columnLayout( visible=True, adjustableColumn=True )
+		
+						for each in parameter.value:
+							recursiveAddAttrUI( each )
+		
+						m.setParent('..')
+						m.setParent('..')
+		
+					elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
+						m.button( l = parameter.name, c = parameter.callback )
+					elif parameter.__class__.__name__ == 'parameter':
+						if not parameter.output:
+							attribute = "%s.%s" % (slumNode.node, parameter.name)
+							help = textwrap.fill(parameter.help,100)
+							type = parameter.value.__class__.__name__
+							value = parameter.value
+		
+							# custom UI
+							if parameter.ui.__class__.__name__ == 'popup':
+								popup=parameter.ui.values
+								menu = m.optionMenuGrp( label=parameter.name )
+								keyz = popup.keys()
+								keyz.sort()
+								defaulValue=keyz[0]
+								for each in keyz:
+									m.menuItem( label = each, data = popup[each] )
+									if popup[each]==value:
+										defaulValue = each
+								m.optionMenuGrp( menu, edit=True, value=defaulValue, annotation=help )
+								m.connectControl( menu, attribute, index=2)
+		
+							elif parameter.ui.__class__.__name__ == 'checkbox':
+								checkbox = m.checkBoxGrp( numberOfCheckBoxes=1, label=parameter.name, annotation=help  )
+								m.connectControl( checkbox, attribute, index=2)
+		
+							# normal parameters
+							elif  type in ['float','int']:
+								value=value
+								min=parameter.min
+								max=parameter.max
+								m.attrFieldSliderGrp(
+									sliderMinValue=parameter.min,
+									sliderMaxValue=parameter.max,
+									fmn=-100000000, fmx=10000000,
+									attribute=attribute,
+									label=parameter.name,
+									annotation=help
+								)
+		
+							elif type == 'str':
+								ui=m.textFieldGrp( label=parameter.name, annotation=help )
+								m.connectControl( ui, attribute, index=2)
+		
+							elif type == 'color':
+								m.attrColorSliderGrp( attribute=attribute, label=parameter.name, annotation=help )
+		
+							else: # vectors/normals
+								nameUI = '__%sUI' % parameter.name
+								m.floatFieldGrp( nameUI, l=parameter.name, numberOfFields=3, annotation=help )
+								m.connectControl( nameUI, '%sX' % attribute, index=2 )
+								m.connectControl( nameUI, '%sY' % attribute, index=3 )
+								m.connectControl( nameUI, '%sZ' % attribute, index=4 )
+		
+			recursiveAddAttrUI( slumNode.slum.parameters( ) )
 
 
 class shaderBase(OpenMayaMPx.MPxNode):
@@ -364,7 +383,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 			Also, this same method can be called to update the node if the class code changes.
 		'''
 		self = OpenMaya.MFnDependencyNode(object)
-		node = slumMaya.slumNode(self.name())
+		node = slumMaya.slumNode(self.name(), forceSlumEval = refreshNodeOnly)
 
 		# dinamically source AETemplate for this node
 		AETemplate( self.typeName() )
@@ -382,7 +401,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 			node['slum'] = classCache.readSlumFile( path )[nodeTypeName]
 
 		# re-initialize now that the slum key is in place
-		node = slumMaya.slumNode(self.name())
+		node = slumMaya.slumNode(self.name(), forceSlumEval = refreshNodeOnly)
 
 		def recursiveAddAttr( parameter ):
 			pars={'input':[], 'output':[]}

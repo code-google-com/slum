@@ -25,6 +25,9 @@
 from classNode import *
 import slum
 
+global slumNodeCache
+slumNodeCache={}
+
 class slumNode(classNode):
 	'''
 		derivated from classNode, this class adds the advantage of evaluating an slum attribute automaticaly, if
@@ -32,20 +35,28 @@ class slumNode(classNode):
 		Instead of returning the string value of the slum attribute, it returns the evaluated class object
 		from the code in the string attribute.
 	'''
-	def __init__(self, node, data=None):
+	def __init__(self, node, data=None, forceSlumEval = False):
 		classNode.__init__(self, node, data)
 		self.classe = None
 		if classNode.has_key(self, 'slum'):
 			self.classe = classNode.__getitem__(self,'slum')
 			classNode._dict.__setitem__(self.classe, 'edited', False)
-		self.evalSlumClass()
-	def evalSlumClass(self):
+		self.evalSlumClass( forceSlumEval )
+	def evalSlumClass(self, forceSlumEval = False):
 		if self.classe:
-			self.slum = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+
+			if not slumNodeCache.has_key(self.node) or forceSlumEval:
+				slumNodeCache[self.node] = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+				
+			self.slum = slumNodeCache[self.node]
 			self.slumParameters = self.slum.parameters()
 			
 			# check if file md5 matches the one stored in the node.
-			self.updated = slum.checkMD5(self.classe['md5'], self.classe['path'])
+
+	def updated(self):	
+		return slum.checkMD5(self.classe['md5'], self.classe['path'])
+		
+
 		
 
 	
