@@ -403,6 +403,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		# re-initialize now that the slum key is in place
 		node = slumMaya.slumNode(self.name(), forceSlumEval = refreshNodeOnly)
 
+
 		def recursiveAddAttr( parameter ):
 			pars={'input':[], 'output':[]}
 			if parameter.__class__.__name__ == 'group':
@@ -411,7 +412,12 @@ class shaderBase(OpenMayaMPx.MPxNode):
 					pars['input'].extend( tmp['input'] )
 					pars['output'].extend( tmp['output'] )
 			elif parameter.__class__.__name__ == 'parameter':
-				node[parameter.name] = parameter.value
+				save = parameter.value
+				if node.has_key(parameter.name):
+					if type(save)==type(node[parameter.name]):
+						print type(save), type(node[parameter.name]), save, node[parameter.name]
+						save = node[parameter.name]
+				node[parameter.name] = save
 				node.setInternal( parameter.name, True ) # add set/get callback
 				node.setReadable( parameter.name, True )
 				node.setStorable( parameter.name, True )

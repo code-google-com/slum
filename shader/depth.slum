@@ -1,18 +1,8 @@
 class depth(slumSurface):
 	def ID(self):
-		'''
-			a unique ID that identifys the shader inside slum. If you upload
-			this template to a online repository, this method will be replaced
-			automatically by the repository server, with the next global available ID.
-		'''
 		return 106
 
 	def parameters(self):
-		'''
-			This method defines all the parameter for our shader template. Keep in mind that here you define
-			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
-			defines.
-		'''
 		offset 	= parameter( 0.0, 'offset', help = 'offset.', max = 10, min = 0 )
 		scale 	= parameter( 1.0, 'scale', help = 'scale.', max = 10, min = 0 )
 
@@ -28,11 +18,6 @@ class depth(slumSurface):
 
 
 	def delight(self, node):
-		'''
-			delight method is were you define the code for this shader, when rendering in 3delight.
-			this is a renderer method. a renderer method should allways return a tupple as:
-			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
-		'''
 		# 3deligth shader parameters
 		shaderPars = [
 			'float offset 	= %f;'	% node['offset'],

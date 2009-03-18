@@ -5,7 +5,7 @@ class shadow(slumSurface):
 			this template to a online repository, this method will be replaced
 			automatically by the repository server, with the next global available ID.
 		'''
-		return 112
+		return 115
 
 	def parameters(self):
 		'''

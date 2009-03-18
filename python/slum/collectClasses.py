@@ -45,13 +45,21 @@ def evalSlumClass(code, classeName):
 	ret = ''
 	newCode  = 'import traceback\n'
 	newCode += 'from slum import *\n'
-	newCode += 'try:\n'
+	newCode += 'try:\n\t'
 	newCode += code.replace('\n','\n\t')
 	newCode += '\nexcept:\n'
 	newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
 	#print newCode
-	print 'bummmm'
-	exec newCode in globals()
+	print 'bummmm', classeName
+	try:
+		exec newCode in globals()
+	except:
+		tmp = ""
+		lineNumber = 1
+		for each in newCode.split('\n'):
+			tmp += "%4d: %s\n" % (lineNumber, each)
+			lineNumber  += 1
+		raise Exception("Error: %s\n\nOn slum template code: \n%s" % (traceback.format_exc(), tmp ) )
 	print 'bummmm2'
 	ret = eval('%s()' % classeName)
 	print 'bummmm3'
