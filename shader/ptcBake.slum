@@ -1,5 +1,24 @@
-
-
+#
+# ptcBake.slum - A simple shader that bakes PTC files for PTC based occlusion
+#
+#    Author: Roberto Hradec - march/2009
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
 
 class ptcBake(slumSurface):
 	def ID(self):
@@ -8,12 +27,8 @@ class ptcBake(slumSurface):
 	def parameters(self):
 		return  group( [
 			parameter( 1, 						'bakePTC'	, ui=ui.checkbox() ),
-			parameter( '<project>/data/<scene>', 		'file' 		),
+			parameter( '<project>/data/<scene>.ptc', 		'file' 		),
 			parameter( 'world', 				'coordsys'	),
-
-			parameter( 256, 'NumeberOfLayers', min=3, max=256	),
-			parameter( 0.0, 	'MinimunHeight', min=-300, max=300	),
-			parameter( 55.0, 	'MaximunHeight', min=-300, max=300		),
 
 			parameter( color(1), 'outColor', output=True ), 	   # required for 3delight surface shaders
 			parameter( color(0), 'outTransparency', output=True ), # required for 3delight surface shaders
@@ -37,39 +52,12 @@ class ptcBake(slumSurface):
 			extern color Cs;
 			outColor = color(0,0,1);
 		''']
-		
-		# use values in meters, instead of centimeters
-		minimunHeight = node['MinimunHeight'] * 100
-		maximunHeight = node['MaximunHeight'] * 100
-		layers 		  = node['NumeberOfLayers']-1
-		steps   	  = float(maximunHeight-minimunHeight)/float(layers)
-
-		
 		if node['bakePTC']:
 			code.append('''
 				extern point P;
 				extern normal N;
-				
-				float steps = %f;
-				float each=0;
-				for(each=0;each<%d;each+=1)
-				{
-					point p = P;
-					float A = area( P, "dicing" );
-					point  wp = transform("world",p);
-					if(wp[1]>(%f+steps) && wp[1]<%f)
-					{
-						outColor = color(1,0,0);
-					}else{
-						outColor = color(0,0,1);
-						A=0;
-					}
-					string fname = format("%%s.%%03d.ptc", file, each);
-					bake3d( fname, "", p, N,	"coordsystem", coordsys, "_area", A, "interpolate", 1 );
-				}
-				
-			''' % (steps, layers, minimunHeight, maximunHeight ) )
+				bake3d( file, "", P, N,	"coordsystem", coordsys, "interpolate", 1 );
+			''')
 
 		# return a tupple
 		return (shaderPars, code)
-

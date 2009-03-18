@@ -1,8 +1,8 @@
 #
-# diffuse.slum - a simple diffuse slum surface shader to be used by
-#				 developers as a template shader.
+# lafortune.slum - a lafortune shader. This version only has a BRDF data set for
+#					skin like shading.
 #
-#    Copyright (C) 2008 - Roberto Hradec
+#    Author: Andre de Souza - feb/2009
 #
 # ---------------------------------------------------------------------------
 #	 This file is part of SLUM.

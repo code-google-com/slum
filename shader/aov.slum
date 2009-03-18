@@ -1,8 +1,10 @@
 #
-# diffuse.slum - a simple diffuse slum surface shader to be used by
-#				 developers as a template shader.
+# aov.slum - a AOV generator shader. Use to create new AOV variables to be
+#			 output as secondary outs. Just add it in the middle of your
+#			 shader network. It intercepts the input to the named AOV, and
+#			 and just output the input, acting like a bridge. 
 #
-#    Copyright (C) 2008 - Roberto Hradec
+#    Author: Andre de Souza - feb/2009
 #
 # ---------------------------------------------------------------------------
 #	 This file is part of SLUM.
