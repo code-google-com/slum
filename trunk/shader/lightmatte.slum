@@ -1,8 +1,15 @@
 #
-# diffuse.slum - a simple diffuse slum surface shader to be used by
-#				 developers as a template shader.
+# lightmatte.slum - a shader that output masks for lights, depending on the
+#					named category of each light.
+#					Category names for lights are:
+#						matte_R - lights with this name will go to the R channel
+#						matte_G - lights with this name will go to the G channel
+#						matte_B - lights with this name will go to the B channel
 #
-#    Copyright (C) 2008 - Roberto Hradec
+#					To find out how to name a light category, refer to 3dfm manual,
+#					look for light category. 
+#
+#    Author: Andre de Souza - feb/2009
 #
 # ---------------------------------------------------------------------------
 #	 This file is part of SLUM.

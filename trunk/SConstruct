@@ -1,6 +1,6 @@
 import os, glob, sys
 
-version = 'slumAlphaD'
+version = 'slumAlphaG'
 
 def recursiveFiles(path):
 	files=[]

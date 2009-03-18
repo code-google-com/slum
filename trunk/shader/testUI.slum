@@ -1,6 +1,5 @@
 #
-# diffuse.slum - a simple diffuse slum surface shader to be used by
-#				 developers as a template shader.
+# testUI.slum - a dummy shader for UI testing purposes.
 #
 #    Copyright (C) 2008 - Roberto Hradec
 #
