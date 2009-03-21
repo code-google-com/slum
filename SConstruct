@@ -1,6 +1,6 @@
 import os, glob, sys
 
-version = 'slumAlphaG'
+version = 'slumAlphaH'
 
 def recursiveFiles(path):
 	files=[]
@@ -17,7 +17,8 @@ def rmDir(path, mask=''):
 	files=[]
 	if os.path.isfile(path):
 		if mask in path:
-			os.remove(path)
+			try: os.remove(path)
+			except: pass
 	elif os.path.isdir(path):
 		for each in glob.glob(os.path.join(path,'*')):
 			rmDir(each,mask)
@@ -28,16 +29,17 @@ def rmDir(path, mask=''):
 	return files
 
 installDir = version
-rmDir(installDir)
-for each in glob.glob('*.zip'):
-	rmDir("%s.zip" % each)
+#for each in glob.glob('./*.zip'):
+#		print each
+#		rmDir("%s.zip" % each)
+#rmDir(installDir)
 rmDir("python", mask='.pyc')
 
 env = Environment()
 if  'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
 		print '''
 
-	you must specify what you want scons to do.
+	you must specify what you want scons to do. (add -c to clean folder)
 
 		release - builds a release package
 		doc	- builds all documentation
@@ -46,6 +48,7 @@ if  'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.arg
 
 		'''
 else:
+
 
 	# release - make a package release
 	for each in recursiveFiles('python'):
@@ -61,10 +64,22 @@ else:
 	env.Alias( 'release', env.Install(installDir, 'README.txt') )
 	zip = env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" )
 	env.Alias( 'release', zip )
+	
+	# windows installer
+	nsisCompiler = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe')
+	if os.path.exists(nsisCompiler):
+		os.system("cat installer/windows.nsi | sed 's/@SLUM@/%s/g' > windows.nsi" % version)
+		os.system("cat installer/license.txt | sed 's/@SLUM@/%s/g' > license.txt" % version)
+		wininstall = env.Command( "%s.exe" % installDir, zip, '"%s" windows.nsi' % nsisCompiler )
+		env.Alias( 'release', wininstall  )
+		env.Clean( wininstall, 'license.txt' )
+		env.Clean( wininstall, 'windows.nsi' )
+		env.Clean( zip, "%s.exe" % installDir )
 
 	env.Clean( zip, 'tmp' )
-	env.Clean( zip, installDir )
 	env.Clean( zip, 'doc' )
+	env.Clean( zip, installDir )
+	env.Clean( zip, "%s.zip" % installDir )
 
 	# generate docs
 	html = env.Command( "docsHtml", "python", 'epydoc -q -o doc --html %s' % os.path.join('$SOURCE','*') )
