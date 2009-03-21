@@ -68,8 +68,8 @@ else:
 	# windows installer
 	nsisCompiler = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe')
 	if os.path.exists(nsisCompiler):
-		os.system("cat installer/windows.nsi | sed 's/@SLUM@/%s/g' > windows.nsi" % version)
-		os.system("cat installer/license.txt | sed 's/@SLUM@/%s/g' > license.txt" % version)
+		os.system("cat installers/windows.nsi | sed 's/@SLUM@/%s/g' > windows.nsi" % version)
+		os.system("cat installers/license.txt | sed 's/@SLUM@/%s/g' > license.txt" % version)
 		wininstall = env.Command( "%s.exe" % installDir, zip, '"%s" windows.nsi' % nsisCompiler )
 		env.Alias( 'release', wininstall  )
 		env.Clean( wininstall, 'license.txt' )
