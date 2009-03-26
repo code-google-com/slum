@@ -22,14 +22,75 @@
 # ---------------------------------------------------------------------------
 
 
-import os, glob, md5
+import os, glob, md5, traceback
 
 
 
 defaultSearchPath = 'SLUM_SEARCH_PATH'
 defaultOnlineRepositorie = 'http://slum.hradec.com/repositorie'
 
+#shortcut methods
+def all():
+	'''
+		high level function
+		return all classes found on disk/online, that suscessfully passed the runtime/syntax error check.
+	'''
+	return collectSlumClasses().allClasses
+
+def refresh():
+	'''
+		high level function
+		force a refresh of all templates from disk/online
+	'''
+	collectSlumClasses(refresh=True)
+
+def init():
+	'''
+		high level function
+		loads all templates from disk/online
+	'''
+	collectSlumClasses()
+
+def template(name):
+	'''
+		high level function
+		returns a class obj for the givem template name.
+		The returned object will be the class defined in the template, properly evaluated for runtime/syntax errors.
+	'''
+	classes = collectSlumClasses().allClasses
+	if not _test(classes[name]):
+		return None
+	c = evalSlumClass(classes[name]['code'], name)
+	c.name = name
+	c.md5 = classes[name]['md5']
+	c.path = classes[name]['path']
+	return c
+
+
+def _test(classe):
+	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
+		test methods in a template for runtime/syntax errors.
+		
+		todo: 	only delight() method being test. Need to implement a 
+				loop that tests all methods in the given class.
+	'''
+	ret = True
+	c = evalSlumClass(classe['code'], classe['name'])
+	#for each in c._renderers():
+	try:
+		tmp=c.delight(c._dictParameters(value=True))
+	except:
+		print "Runtime error in %s delight method.\n%s" % (classe['path'], traceback.format_exc())
+		ret = False
+	return ret
+
+
 def _readSlumFile(path):
+	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
+		reads a template from a file and returns it as a list (one line per record)
+	'''
 	slumCode = open(path).readlines()
 	# fix txt if writen in windows
 	for n in range(len(slumCode)):
@@ -39,6 +100,7 @@ def _readSlumFile(path):
 
 def evalSlumClass(code, classeName):
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		execute "code" string, and returns the class object for "classeName"
 	'''
 	
@@ -50,7 +112,7 @@ def evalSlumClass(code, classeName):
 	newCode += '\nexcept:\n'
 	newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
 	#print newCode
-	print 'bummmm', classeName
+	#print 'bummmm', classeName
 	try:
 		exec newCode in globals()
 	except:
@@ -60,25 +122,28 @@ def evalSlumClass(code, classeName):
 			tmp += "%4d: %s\n" % (lineNumber, each)
 			lineNumber  += 1
 		raise Exception("Error: %s\n\nOn slum template code: \n%s" % (traceback.format_exc(), tmp ) )
-	print 'bummmm2'
+	#print 'bummmm2'
 	ret = eval('%s()' % classeName)
-	print 'bummmm3'
+	#print 'bummmm3'
 	return ret
 
 def getMD5(code):
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		calculates md5 for the given code
 	'''
 	return md5.md5( code ).digest()
 
 def checkMD5(md5data, file):
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		check if the md5 matchs the md5 of a source file
 	'''
 	return md5data == getMD5( ''.join( _readSlumFile(file) ) )
 
 class collectSlumClasses:
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		class responsible for deal with slum files and classes
 		initializing a new class object will trigger the search of *.slum files in the local search path and online repositories.
 		a cache system is in place to avoid un-necessary re-caching by clients.
@@ -192,6 +257,11 @@ class collectSlumClasses:
 				slumClasses[classe]['name'] = classe
 				slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
 				slumClasses[classe]['path'] = path
+				
+				# execute code to catch potential runtime errors so clients don't have to
+				if not _test(slumClasses[classe]):
+					del slumClasses[classe]
+				
 		return slumClasses
 
 

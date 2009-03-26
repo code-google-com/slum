@@ -415,7 +415,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 				save = parameter.value
 				if node.has_key(parameter.name):
 					if type(save)==type(node[parameter.name]):
-						print type(save), type(node[parameter.name]), save, node[parameter.name]
+						#print type(save), type(node[parameter.name]), save, node[parameter.name]
 						save = node[parameter.name]
 				node[parameter.name] = save
 				node.setInternal( parameter.name, True ) # add set/get callback
