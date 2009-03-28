@@ -8,7 +8,7 @@ before anything, you DON'T need SCons to build and install. SConstruct file is h
 specially when slum starts to get bigger, with more clients, etc.
 
 Starting on alphaH, Windows installation is now handled by the slum windows installer.
-Check out http://code.google.com/p/slum/ and download the slum<Version>.exe file.
+Check out http://code.google.com/p/slum/ and download the slum<Version>_Windows.exe file.
 
 To install on linux or OSX, you just need to add 2 variables to your environment (or maya.env file):
 

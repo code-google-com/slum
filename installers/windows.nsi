@@ -21,7 +21,7 @@
 Name "@SLUM@"
 
 ; The file to write
-OutFile "@SLUM@.exe"
+OutFile "@SLUM@_Windows.exe"
 
 ; The default installation directory
 InstallDir $PROGRAMFILES\slum
