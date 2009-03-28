@@ -241,7 +241,7 @@ class AETemplate:
 			The UI is based in the data returned from the parameters method of
 			the slum class associated with the node.
 		'''
-		
+
 		# overrides template clientRefresh method to allow callbacks in the template to
 		# trigger a UI refresh in Maya
 		def refresh():
@@ -250,27 +250,27 @@ class AETemplate:
 
 		# this garantees the layout will be rebuild properly everytime
 		# the attribute editor is open/selected for a node.
-		#layoutName = "layoutID_%s" % m.nodeType(slumNode.node)
-		layoutName = "layoutID_%s" % slumNode.node
+		layoutName = "layoutID_%s" % m.nodeType(slumNode.node)
+		#layoutName = "layoutID_%s" % slumNode.node
 		AETemplate._deleteLayoutIfExists( layoutName, 'columnLayout' )
-		
+
 		if not AETemplate._layoutExists(layoutName, 'columnLayout'):
-			
+
 			m.columnLayout( layoutName, visible=True, adjustableColumn=True )
-	
+
 			# a recursive function to create our UI. perfect for hierarquical parameters
 			def recursiveAddAttrUI( parameter ):
 				if not parameter.hidden:
 					if   parameter.__class__.__name__ == 'group' :
 						m.frameLayout( label = parameter.name, collapse = not parameter.opened )
 						m.columnLayout( visible=True, adjustableColumn=True )
-		
+
 						for each in parameter.value:
 							recursiveAddAttrUI( each )
-		
+
 						m.setParent('..')
 						m.setParent('..')
-		
+
 					elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
 						m.button( l = parameter.name, c = parameter.callback )
 					elif parameter.__class__.__name__ == 'parameter':
@@ -279,7 +279,7 @@ class AETemplate:
 							help = textwrap.fill(parameter.help,100)
 							type = parameter.value.__class__.__name__
 							value = parameter.value
-		
+
 							# custom UI
 							if parameter.ui.__class__.__name__ == 'popup':
 								popup=parameter.ui.values
@@ -293,11 +293,11 @@ class AETemplate:
 										defaulValue = each
 								m.optionMenuGrp( menu, edit=True, value=defaulValue, annotation=help )
 								m.connectControl( menu, attribute, index=2)
-		
+
 							elif parameter.ui.__class__.__name__ == 'checkbox':
 								checkbox = m.checkBoxGrp( numberOfCheckBoxes=1, label=parameter.name, annotation=help  )
 								m.connectControl( checkbox, attribute, index=2)
-		
+
 							# normal parameters
 							elif  type in ['float','int']:
 								value=value
@@ -311,21 +311,21 @@ class AETemplate:
 									label=parameter.name,
 									annotation=help
 								)
-		
+
 							elif type == 'str':
 								ui=m.textFieldGrp( label=parameter.name, annotation=help )
 								m.connectControl( ui, attribute, index=2)
-		
+
 							elif type == 'color':
 								m.attrColorSliderGrp( attribute=attribute, label=parameter.name, annotation=help )
-		
+
 							else: # vectors/normals
 								nameUI = '__%sUI' % parameter.name
 								m.floatFieldGrp( nameUI, l=parameter.name, numberOfFields=3, annotation=help )
 								m.connectControl( nameUI, '%sX' % attribute, index=2 )
 								m.connectControl( nameUI, '%sY' % attribute, index=3 )
 								m.connectControl( nameUI, '%sZ' % attribute, index=4 )
-		
+
 			recursiveAddAttrUI( slumNode.slum.parameters( ) )
 
 
@@ -338,7 +338,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 		For light shaders, we use shaderLight class, which is derivate from this one and MPxLocatorNode
 	'''
 	slum = None
-	
+
 	def __init__(self):
 		''' placeholder. not used at the moment '''
 		#OpenMayaMPx.MPxNode.__init__(self)
