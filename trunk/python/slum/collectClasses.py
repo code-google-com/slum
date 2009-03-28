@@ -22,8 +22,8 @@
 # ---------------------------------------------------------------------------
 
 
-import os, glob, md5, traceback
-
+import os, glob,  traceback
+import md5 as __md5
 
 
 defaultSearchPath = 'SLUM_SEARCH_PATH'
@@ -51,6 +51,23 @@ def init():
 	'''
 	collectSlumClasses()
 
+def path(name):
+	'''
+		high level function
+		returns a updated path for a given template name.
+	'''
+	classes = collectSlumClasses().allClasses
+	return classes[name]['path']
+
+def md5(name):
+	'''
+		high level function
+		returns a updated path for a given template name.
+	'''
+	classes = collectSlumClasses().allClasses
+	return classes[name]['md5']
+
+
 def template(name):
 	'''
 		high level function
@@ -64,6 +81,7 @@ def template(name):
 	c.name = name
 	c.md5 = classes[name]['md5']
 	c.path = classes[name]['path']
+	c.refresh = refresh()
 	return c
 
 
@@ -71,8 +89,8 @@ def _test(classe):
 	'''
 		low level class (shouldn't be directly used - refer to high level functions/classes)
 		test methods in a template for runtime/syntax errors.
-		
-		todo: 	only delight() method being test. Need to implement a 
+
+		todo: 	only delight() method being test. Need to implement a
 				loop that tests all methods in the given class.
 	'''
 	ret = True
@@ -103,7 +121,7 @@ def evalSlumClass(code, classeName):
 		low level class (shouldn't be directly used - refer to high level functions/classes)
 		execute "code" string, and returns the class object for "classeName"
 	'''
-	
+
 	ret = ''
 	newCode  = 'import traceback\n'
 	newCode += 'from slum import *\n'
@@ -132,12 +150,12 @@ def getMD5(code):
 		low level class (shouldn't be directly used - refer to high level functions/classes)
 		calculates md5 for the given code
 	'''
-	return md5.md5( code ).digest()
+	return __md5.md5( code ).digest()
 
 def checkMD5(md5data, file):
 	'''
 		low level class (shouldn't be directly used - refer to high level functions/classes)
-		check if the md5 matchs the md5 of a source file
+		check if the md5 matchs the md5 of the source file.
 	'''
 	return md5data == getMD5( ''.join( _readSlumFile(file) ) )
 
@@ -220,7 +238,7 @@ class collectSlumClasses:
 		onlineClasses = self.online()
 		print 'slum: all done.'
 		return ( localClasses, onlineClasses )
-		
+
 	def _registerSlumFile(self, slumCode, path):
 		'''
 			based on a string with slum code on it, registers all class names in it into a temp db
@@ -229,8 +247,8 @@ class collectSlumClasses:
 
 			this class is a support class for local and online methods!
 		'''
-		
-		
+
+
 		# keep dir() to compare with new dir() after
 		# code execution to find the new classes
 		# defined inside slum file
@@ -257,11 +275,11 @@ class collectSlumClasses:
 				slumClasses[classe]['name'] = classe
 				slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
 				slumClasses[classe]['path'] = path
-				
+
 				# execute code to catch potential runtime errors so clients don't have to
 				if not _test(slumClasses[classe]):
 					del slumClasses[classe]
-				
+
 		return slumClasses
 
 
@@ -271,7 +289,7 @@ class collectSlumClasses:
 			returns data in the same format as local
 		'''
 		return {}
-		
+
 	def readSlumFile(self, path):
 		return self._registerSlumFile( _readSlumFile(path), path )
 

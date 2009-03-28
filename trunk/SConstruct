@@ -64,17 +64,26 @@ else:
 	env.Alias( 'release', env.Install(installDir, 'README.txt') )
 	zip = env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" )
 	env.Alias( 'release', zip )
-	
+
 	# windows installer
-	nsisCompiler = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe')
-	if os.path.exists(nsisCompiler):
-		os.system("cat installers/windows.nsi | sed 's/@SLUM@/%s/g' > windows.nsi" % version)
-		os.system("cat installers/license.txt | sed 's/@SLUM@/%s/g' > license.txt" % version)
-		wininstall = env.Command( "%s.exe" % installDir, zip, '"%s" windows.nsi' % nsisCompiler )
-		env.Alias( 'release', wininstall  )
-		env.Clean( wininstall, 'license.txt' )
-		env.Clean( wininstall, 'windows.nsi' )
-		env.Clean( zip, "%s.exe" % installDir )
+	znis = {}
+	try:
+		znis['darwin'] = os.popen('which nsis').readlines()[0].strip()
+	except: pass
+	if os.environ.has_key('PROGRAMFILES(X86)'):
+		znis['cygwin'] = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe'),
+
+	if sys.platform in znis.keys():
+		nsisCompiler = znis[sys.platform]
+		print nsisCompiler
+		if os.path.exists(nsisCompiler):
+			os.system("cat installers/windows.nsi | sed 's/@SLUM@/%s/g' > windows.nsi" % version)
+			os.system("cat installers/license.txt | sed 's/@SLUM@/%s/g' > license.txt" % version)
+			wininstall = env.Command( "%s.exe" % installDir, zip, '"%s" windows.nsi' % nsisCompiler )
+			env.Alias( 'release', wininstall  )
+			env.Clean( wininstall, 'license.txt' )
+			env.Clean( wininstall, 'windows.nsi' )
+			env.Clean( zip, "%s.exe" % installDir )
 
 	env.Clean( zip, 'tmp' )
 	env.Clean( zip, 'doc' )
