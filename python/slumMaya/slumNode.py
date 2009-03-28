@@ -47,16 +47,14 @@ class slumNode(classNode):
 
 			if not slumNodeCache.has_key(self.node) or forceSlumEval:
 				slumNodeCache[self.node] = slum.evalSlumClass(self.classe['code'], self.classe['name'])
-				
+
 			self.slum = slumNodeCache[self.node]
 			self.slumParameters = self.slum.parameters()
-			
+
 			# check if file md5 matches the one stored in the node.
 
-	def updated(self):	
-		return slum.checkMD5(self.classe['md5'], self.classe['path'])
-		
-
-		
-
-	
+	def updated(self):
+		'''
+			check if source code has being updated.
+		'''
+		return slum.checkMD5(self.classe['md5'], slum.path( self.classe['name'] ) )
