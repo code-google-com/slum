@@ -71,7 +71,7 @@ else:
 		znis['darwin'] = os.popen('which nsis').readlines()[0].strip()
 	except: pass
 	if os.environ.has_key('PROGRAMFILES(X86)'):
-		znis['cygwin'] = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe'),
+		znis['cygwin'] = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe')
 
 	if sys.platform in znis.keys():
 		nsisCompiler = znis[sys.platform]
