@@ -80,9 +80,9 @@ Section "Slum (required)"
   File /r "@SLUM@"
 
   ; set maya and slum environment vars
-  ${EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"P" "HKLM" "$INSTDIR/python"
-  ${EnvVarUpdate} $0 "SLUM_PATH" 			"P" "HKLM" "$INSTDIR"
-  ${EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 	"P" "HKLM" "$INSTDIR/shader"
+  ${EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"P" "HKLM" "$INSTDIR/@SLUM@/python"
+  ${EnvVarUpdate} $0 "SLUM_PATH" 			"P" "HKLM" "$INSTDIR/@SLUM@"
+  ${EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 	"P" "HKLM" "$INSTDIR/@SLUM@/shader"
   ;${EnvVarUpdate} $0 "PATH" "P" "HKCU" "%WinDir%\System32"                            ; Prepend
   ;${EnvVarUpdate} $0 "LIB"  "R" "HKLM" "C:\MyLib"                                     ; Remove
   ;${EnvVarUpdate} $0 "PATH" "R" "HKLM" "C:\Program Files\MyApp-v1.0"  ; Remove path of old rev
@@ -113,9 +113,9 @@ SectionEnd
 Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@SLUM@"
 
-  ${un.EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"R" "HKLM" "$INSTDIR/python"
-  ${un.EnvVarUpdate} $0 "SLUM_PATH" 			"R" "HKLM" "$INSTDIR"
-  ${un.EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 		"R" "HKLM" "$INSTDIR/shader"
+  ${un.EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"R" "HKLM" "$INSTDIR/@SLUM@/python"
+  ${un.EnvVarUpdate} $0 "SLUM_PATH" 			"R" "HKLM" "$INSTDIR/@SLUM@"
+  ${un.EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 		"R" "HKLM" "$INSTDIR/@SLUM@/shader"
 
   ; Remove files and uninstaller
   RMDir /r $INSTDIR\slumAlphaG
