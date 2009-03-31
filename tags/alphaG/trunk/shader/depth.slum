@@ -1,0 +1,69 @@
+#
+# depth.slum - outputs depth from the camera.
+#
+#    Author: Andre de Souza - feb/2009
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class depth(slumSurface):
+	def ID(self):
+		return 106
+
+	def parameters(self):
+		offset 	= parameter( 0.0, 'offset', help = 'offset.', max = 10, min = 0 )
+		scale 	= parameter( 1.0, 'scale', help = 'scale.', max = 10, min = 0 )
+
+		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			offset,
+			scale,
+		], name = 'depth' )
+
+
+	def delight(self, node):
+		# 3deligth shader parameters
+		shaderPars = [
+			'float offset 	= %f;'	% node['offset'],
+			'float scale 	= %f;'	% node['scale'],
+			'shader_output varying color _DEPTH=0;',
+			
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+				extern normal N;
+				extern point P;
+				outColor=depth( P )*scale+offset;
+				_DEPTH=depth( P )*scale+offset;
+				
+			''']
+
+		# return a tupple
+		return (shaderPars, code)
+
+	def cgfx(self, node):
+		code=['''
+		''']
+		return ("",code)

@@ -1,0 +1,81 @@
+#
+# diffuse.slum - a simple diffuse slum surface shader to be used by
+#				 developers as a template shader.
+#
+#    Copyright (C) 2008 - Roberto Hradec
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class diffuse(slumSurface):
+	def ID(self):
+		'''
+			a unique ID that identifys the shader inside slum. If you upload
+			this template to a online repository, this method will be replaced
+			automatically by the repository server, with the next global available ID.
+		'''
+		return 2
+
+	def parameters(self):
+		'''
+			This method defines all the parameter for our shader template. Keep in mind that here you define
+			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+			defines.
+		'''
+		Intensity 	= parameter( 1.0, 'Intensity', help = 'Diffuse intensity.', max = 10, min = 0 )
+		Color 		= parameter( color(1), 'Color', help = 'Color for the diffuse.' )
+
+		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			Intensity,
+			Color,
+		], name = 'Simple Diffuse' )
+
+
+	def delight(self, node):
+		'''
+			delight method is were you define the code for this shader, when rendering in 3delight.
+			this is a renderer method. a renderer method should allways return a tupple as:
+			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
+		'''
+		# 3deligth shader parameters
+		shaderPars = [
+			'float Intensity 	= %f;'	% node['Intensity'],
+			'color Color		= %s;'	% node['Color'],
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+				extern normal N;
+				extern point P;
+				outColor = diffuse(normalize(N)) * Color * Intensity;
+			''']
+
+		# return a tupple
+		return (shaderPars, code)
+
+	def cgfx(self, node):
+		code=['''
+		''']
+		return ("",code)
