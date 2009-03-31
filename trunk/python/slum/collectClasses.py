@@ -234,6 +234,14 @@ class collectSlumClasses:
 	def _refresh(self):
 		print 'slum: local caching...'
 		localClasses = self.local()
+		idz = []
+		for classe in localClasses.keys():
+			idz.append('slum:	found ID %4d Class %s' % (localClasses[classe]['ID'] ,classe))
+			
+		idz.sort()
+		for each in idz:
+			print each
+
 		print 'slum: online caching'
 		onlineClasses = self.online()
 		print 'slum: all done.'
@@ -265,8 +273,9 @@ class collectSlumClasses:
 		# loop trough all defined classes inside the current slum file
 		# and register then in a dict, if no other with the same name is already registered.
 		slumClasses={}
+		idz = []
 		for classe in filter(lambda x: x not in registry, newClasses):
-			print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
+			#print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
 			if not slumClasses.has_key(classe):
 				slumClasses[classe] = {}
 				slumClasses[classe]['code'] = ''.join(slumCode)
@@ -279,6 +288,8 @@ class collectSlumClasses:
 				# execute code to catch potential runtime errors so clients don't have to
 				if not _test(slumClasses[classe]):
 					del slumClasses[classe]
+				
+				slumClasses[classe]['ID'] = evalSlumClass(slumClasses[classe]['code'], classe).ID()
 
 		return slumClasses
 
@@ -310,5 +321,6 @@ class collectSlumClasses:
 				for path in env.split(os.path.pathsep):
 					for each in glob.glob( os.path.join( path, '*.slum' ) ):
 						slumClasses.update( self.readSlumFile(each) )
+						
 
 		return slumClasses
