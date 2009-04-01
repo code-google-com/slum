@@ -1,0 +1,109 @@
+#
+# lightmatte.slum - a shader that output masks for lights, depending on the
+#					named category of each light.
+#					Category names for lights are:
+#						matte_R - lights with this name will go to the R channel
+#						matte_G - lights with this name will go to the G channel
+#						matte_B - lights with this name will go to the B channel
+#
+#					To find out how to name a light category, refer to 3dfm manual,
+#					look for light category. 
+#
+#    Author: Andre de Souza - feb/2009
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class lightmatte(slumSurface):
+	def ID(self):
+		'''
+			a unique ID that identifys the shader inside slum. If you upload
+			this template to a online repository, this method will be replaced
+			automatically by the repository server, with the next global available ID.
+		'''
+		return 108
+
+	def parameters(self):
+		'''
+			This method defines all the parameter for our shader template. Keep in mind that here you define
+			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+			defines.
+		'''
+		#Intensity 	= parameter( 1.0, 'Intensity', help = 'Diffuse intensity.', max = 10, min = 0 )
+		#Color 		= parameter( color(1), 'Color', help = 'Color for the diffuse.' )
+		#Normal
+		#Point
+		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			
+		], name = 'Lightmatte' )
+
+
+	def delight(self, node):
+		'''
+			delight method is were you define the code for this shader, when rendering in 3delight.
+			this is a renderer method. a renderer method should allways return a tupple as:
+			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
+		'''
+		# 3deligth shader parameters
+		shaderPars = [
+			#'float Intensity 	= %f;'	% node['Intensity'],
+			#'color Color		= %s;'	% node['Color'],
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+				extern point P;
+				extern normal N;
+				
+				float luminance( color C )
+				{
+				       return 	comp( C, 0 ) * 0.212671 + comp( C, 1 ) * 0.715160 + comp( C, 2 ) * 0.072169;
+				}
+				
+				color getlightMatte( point PP; normal NN )
+				{
+					 color C = color 0;
+					illuminance( "matte_R", PP, NN, PI/2 ) {
+						extern vector L;
+						extern color Cl;
+						C += color (1, 0, 0) * luminance(Cl) * normalize( L ).NN;
+					}
+					illuminance( "matte_G", PP, NN, PI/2 ) {
+						extern vector L;
+						extern color Cl;
+						C += color (0, 1, 0) * luminance(Cl) * normalize( L ).NN;
+					}
+					illuminance( "matte_B", PP, NN, PI/2 ) {
+						extern vector L;
+						extern color Cl;
+						C += color (0, 0, 1) * normalize(L).NN;
+					}
+					return C;
+				}
+				outColor = getlightMatte(P, normalize(N));
+			''']
+
+		# return a tupple
+		return (shaderPars, code)

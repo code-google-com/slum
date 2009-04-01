@@ -24,5 +24,3 @@ from collectClasses import *
 from uiWrappers import *
 from shaderClasses import *
 from ribLibrary import *
-
-init()

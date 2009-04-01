@@ -85,14 +85,17 @@ class slum:
 			'cgfx',
 			'glsl',
 		]
-	def _dictParameters(self):
+	def _dictParameters(self, value=False):
 		def recursivePopulateDict( parameter ):
 			temp = {}
 			if parameter.__class__.__name__ == 'group':
 				for each in parameter.value:
 					temp.update( recursivePopulateDict( each ) )
 			elif parameter.__class__.__name__ == 'parameter':
-				temp[parameter.name] = parameter
+				if value:
+					temp[parameter.name] = parameter.value
+				else:
+					temp[parameter.name] = parameter
 			return temp
 
 		return recursivePopulateDict( self.parameters() )

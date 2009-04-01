@@ -51,6 +51,7 @@ class ptcBake(slumSurface):
 		code=['''
 			extern color Cs;
 			outColor = color(0,0,1);
+			outTransparency = 0.01;
 		''']
 		if node['bakePTC']:
 			code.append('''

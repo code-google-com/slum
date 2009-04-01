@@ -1,5 +1,6 @@
 #
-#   simpleSSS.slum - an SubSurface Scatering shader
+#  facingForward.slum - a facing ratio shader...
+#						white if facing the camera or black if not
 #
 #	Author: Andre de Souza - feb/2009
 #
@@ -20,15 +21,14 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
-class simpleSSS(slumSurface):
+class facingForward(slumSurface):
 	def ID(self):
-		return 99
+		return 101
 
 	def parameters(self):
-		Ks = parameter( 0.7, 'Ks', help = 'Scatering Specular.', max = 10, min = 0 )
-		Kd = parameter( 0.6, 'Kd', help = 'Scatering Difuse.', max = 10, min = 0 )
-		Ka = parameter( 0.1, 'Ka', help = 'Scaterin Specular.', max = 10, min = 0 )
-		Roughness = parameter( 0.4, 'Roughness', help = 'Scaterin Specular Roughness. ', max = 10, min = 0 )
+		Clamp = parameter( 0, 'Clamp', help = 'Clamp.', max = 1, min = 0 )
+		Invert = parameter( 0, 'Invert', help = 'Invert.', max = 1, min = 0 )
+		Attenuation = parameter( 2, 'Attenuation', help = 'Attenuation. ', max = 10, min = 0 )
 
 		OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
 		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
@@ -36,43 +36,36 @@ class simpleSSS(slumSurface):
 		return  group( [
 			OutColor,
 			OutTransparency,
-			Ks,
-			Kd,
-			Ka,
-			Roughness,
-		], name = 'Simple SSS' )
+			Clamp,
+			Invert,
+			Attenuation,
+		], name = 'FacingForward' )
 
 
 	def delight(self, node):
 		# 3deligth shader parameters
 		shaderPars = [
-			'float Ks 			= %f;'	% node['Ks'],
-			'float Kd 			= %f;'	% node['Kd'],
-			'float Ka 			= %f;'	% node['Ka'],
-			'float Roughness 	= %f;'	% node['Roughness'],
 
-			'output varying color outColor 			= 0;',
-			'output varying color outTransparency	= 0;'
+			'float Clamp 	= %f;'	% node['Clamp'],
+			'float Invert 	= %f;'	% node['Invert'],
+			'float Attenuation 	= %f;'	% node['Attenuation'],
+			'shader_output varying color _FACINGFORWARD=0;',
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
 		]
 
 		# shader code
 		code=['''
 				extern normal N;
-				extern point  P;
 				extern vector I;
-				normal Nn = normalize(N);
-				normal Nf = faceforward(Nn, I);
-				vector V  = normalize(-I);
-
-				uniform string raytype = "unknown";
-				rayinfo( "type", raytype );
-
-				if( raytype == "subsurface" )
-				{
-					outColor = Ka*ambient() + Kd*diffuse(Nn);
-				}else{
-					outColor = subsurface(P) + Ks * specular(Nf, V, roughness);
-				}
+				vector II = normalize(I);
+				normal NN = normalize(N);
+				float cos = -II.NN;
+				outColor = pow(cos, Attenuation) * (cos/abs(cos));
+				outColor = Clamp  != 0 ? clamp(outColor, 0, 1) : outColor;
+				outColor = Invert != 0 ? 1 - outColor 		   : outColor;
+				_FACINGFORWARD = outColor;
 			''']
 
 		# return a tupple

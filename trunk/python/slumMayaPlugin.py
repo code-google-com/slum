@@ -31,14 +31,20 @@ searchPath = ['SLUM_SEARCH_PATH', 'MAYA_SCRIPT_PATH', 'PYTHONPATH']
 
 def initializePlugin(mobject):
 	global nodeFactory
+	mplugin = OpenMayaMPx.MFnPlugin(mobject)
 	nodeFactory = slumMaya.nodeFactory(
-		OpenMayaMPx.MFnPlugin(mobject),
+		mplugin,
 		pluginName,
 		PluginNodeId,
 		searchPath
 	)
 	nodeFactory.register()
 
+	slumMaya.customGLView.initialize(mplugin)
+
 def uninitializePlugin(mobject):
 	global nodeFactory
+	mplugin = OpenMayaMPx.MFnPlugin(mobject)
 	nodeFactory.unregister()
+
+	slumMaya.customGLView.uninitialize(mplugin)

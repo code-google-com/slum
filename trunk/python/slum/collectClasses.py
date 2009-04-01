@@ -22,14 +22,93 @@
 # ---------------------------------------------------------------------------
 
 
-import os, glob, md5
-
+import os, glob,  traceback
+import md5 as __md5
 
 
 defaultSearchPath = 'SLUM_SEARCH_PATH'
 defaultOnlineRepositorie = 'http://slum.hradec.com/repositorie'
 
+#shortcut methods
+def all():
+	'''
+		high level function
+		return all classes found on disk/online, that suscessfully passed the runtime/syntax error check.
+	'''
+	return collectSlumClasses().allClasses
+
+def refresh():
+	'''
+		high level function
+		force a refresh of all templates from disk/online
+	'''
+	collectSlumClasses(refresh=True)
+
+def init():
+	'''
+		high level function
+		loads all templates from disk/online
+	'''
+	collectSlumClasses()
+
+def path(name):
+	'''
+		high level function
+		returns a updated path for a given template name.
+	'''
+	classes = collectSlumClasses().allClasses
+	return classes[name]['path']
+
+def md5(name):
+	'''
+		high level function
+		returns a updated path for a given template name.
+	'''
+	classes = collectSlumClasses().allClasses
+	return classes[name]['md5']
+
+
+def template(name):
+	'''
+		high level function
+		returns a class obj for the givem template name.
+		The returned object will be the class defined in the template, properly evaluated for runtime/syntax errors.
+	'''
+	classes = collectSlumClasses().allClasses
+	if not _test(classes[name]):
+		return None
+	c = evalSlumClass(classes[name]['code'], name)
+	c.name = name
+	c.md5 = classes[name]['md5']
+	c.path = classes[name]['path']
+	c.refresh = refresh()
+	return c
+
+
+def _test(classe):
+	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
+		test methods in a template for runtime/syntax errors.
+
+		todo: 	only delight() method being test. Need to implement a
+				loop that tests all methods in the given class.
+	'''
+	ret = True
+	c = evalSlumClass(classe['code'], classe['name'])
+	#for each in c._renderers():
+	try:
+		tmp=c.delight(c._dictParameters(value=True))
+	except:
+		print "Runtime error in %s delight method.\n%s" % (classe['path'], traceback.format_exc())
+		ret = False
+	return ret
+
+
 def _readSlumFile(path):
+	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
+		reads a template from a file and returns it as a list (one line per record)
+	'''
 	slumCode = open(path).readlines()
 	# fix txt if writen in windows
 	for n in range(len(slumCode)):
@@ -39,9 +118,10 @@ def _readSlumFile(path):
 
 def evalSlumClass(code, classeName):
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		execute "code" string, and returns the class object for "classeName"
 	'''
-	
+
 	ret = ''
 	newCode  = 'import traceback\n'
 	newCode += 'from slum import *\n'
@@ -50,7 +130,7 @@ def evalSlumClass(code, classeName):
 	newCode += '\nexcept:\n'
 	newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
 	#print newCode
-	print 'bummmm', classeName
+	#print 'bummmm', classeName
 	try:
 		exec newCode in globals()
 	except:
@@ -60,25 +140,28 @@ def evalSlumClass(code, classeName):
 			tmp += "%4d: %s\n" % (lineNumber, each)
 			lineNumber  += 1
 		raise Exception("Error: %s\n\nOn slum template code: \n%s" % (traceback.format_exc(), tmp ) )
-	print 'bummmm2'
+	#print 'bummmm2'
 	ret = eval('%s()' % classeName)
-	print 'bummmm3'
+	#print 'bummmm3'
 	return ret
 
 def getMD5(code):
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		calculates md5 for the given code
 	'''
-	return md5.md5( code ).digest()
+	return __md5.md5( code ).digest()
 
 def checkMD5(md5data, file):
 	'''
-		check if the md5 matchs the md5 of a source file
+		low level class (shouldn't be directly used - refer to high level functions/classes)
+		check if the md5 matchs the md5 of the source file.
 	'''
 	return md5data == getMD5( ''.join( _readSlumFile(file) ) )
 
 class collectSlumClasses:
 	'''
+		low level class (shouldn't be directly used - refer to high level functions/classes)
 		class responsible for deal with slum files and classes
 		initializing a new class object will trigger the search of *.slum files in the local search path and online repositories.
 		a cache system is in place to avoid un-necessary re-caching by clients.
@@ -151,11 +234,19 @@ class collectSlumClasses:
 	def _refresh(self):
 		print 'slum: local caching...'
 		localClasses = self.local()
+		idz = []
+		for classe in localClasses.keys():
+			idz.append('slum:	found ID %4d Class %s' % (localClasses[classe]['ID'] ,classe))
+			
+		idz.sort()
+		for each in idz:
+			print each
+
 		print 'slum: online caching'
 		onlineClasses = self.online()
 		print 'slum: all done.'
 		return ( localClasses, onlineClasses )
-		
+
 	def _registerSlumFile(self, slumCode, path):
 		'''
 			based on a string with slum code on it, registers all class names in it into a temp db
@@ -164,8 +255,8 @@ class collectSlumClasses:
 
 			this class is a support class for local and online methods!
 		'''
-		
-		
+
+
 		# keep dir() to compare with new dir() after
 		# code execution to find the new classes
 		# defined inside slum file
@@ -182,8 +273,9 @@ class collectSlumClasses:
 		# loop trough all defined classes inside the current slum file
 		# and register then in a dict, if no other with the same name is already registered.
 		slumClasses={}
+		idz = []
 		for classe in filter(lambda x: x not in registry, newClasses):
-			print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
+			#print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
 			if not slumClasses.has_key(classe):
 				slumClasses[classe] = {}
 				slumClasses[classe]['code'] = ''.join(slumCode)
@@ -192,6 +284,13 @@ class collectSlumClasses:
 				slumClasses[classe]['name'] = classe
 				slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
 				slumClasses[classe]['path'] = path
+
+				# execute code to catch potential runtime errors so clients don't have to
+				if not _test(slumClasses[classe]):
+					del slumClasses[classe]
+				
+				slumClasses[classe]['ID'] = evalSlumClass(slumClasses[classe]['code'], classe).ID()
+
 		return slumClasses
 
 
@@ -201,7 +300,7 @@ class collectSlumClasses:
 			returns data in the same format as local
 		'''
 		return {}
-		
+
 	def readSlumFile(self, path):
 		return self._registerSlumFile( _readSlumFile(path), path )
 
@@ -222,5 +321,6 @@ class collectSlumClasses:
 				for path in env.split(os.path.pathsep):
 					for each in glob.glob( os.path.join( path, '*.slum' ) ):
 						slumClasses.update( self.readSlumFile(each) )
+						
 
 		return slumClasses

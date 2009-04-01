@@ -91,7 +91,11 @@ class delight:
 		ret = False
 		dlParameters = ['shadingParameters', 'shadingCode']
 		if plugName in dlParameters:
-			delightShader = node.slum.delight( node )
+			import traceback
+			try:
+				delightShader = node.slum.delight( node )
+			except:
+				raise Exception('slum template error: \n%s' % traceback.format_exc() )
 			zcode = delightShader[ dlParameters.index(plugName) ]
 			# ====================================================================================================
 			# hack to allow slum to work with 3delight 7.0.0 version

@@ -22,7 +22,7 @@
 
 class simpleSSS(slumSurface):
 	def ID(self):
-		return 99
+		return 100
 
 	def parameters(self):
 		Ks = parameter( 0.7, 'Ks', help = 'Scatering Specular.', max = 10, min = 0 )

@@ -1,8 +1,4 @@
 #
-# slumMayaPlugin - 	the plugin loader. Maya calls the initializePlugin and
-#					unitializePlugin in this file everytime the plugin
-#					is laoded/unloaded
-#
 #    Copyright (C) 2008 - Roberto Hradec
 #
 # ---------------------------------------------------------------------------
@@ -22,23 +18,11 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
-import maya.OpenMayaMPx as OpenMayaMPx
-import slumMaya
 
-pluginName = "slum"
-PluginNodeId = 0xC0000
-searchPath = ['SLUM_SEARCH_PATH', 'MAYA_SCRIPT_PATH', 'PYTHONPATH']
+from datatypes import *
+from collectClasses import *
+from uiWrappers import *
+from shaderClasses import *
+from ribLibrary import *
 
-def initializePlugin(mobject):
-	global nodeFactory
-	nodeFactory = slumMaya.nodeFactory(
-		OpenMayaMPx.MFnPlugin(mobject),
-		pluginName,
-		PluginNodeId,
-		searchPath
-	)
-	nodeFactory.register()
-
-def uninitializePlugin(mobject):
-	global nodeFactory
-	nodeFactory.unregister()
+init()
