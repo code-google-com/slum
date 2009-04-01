@@ -1,6 +1,6 @@
 import os, glob, sys
 
-version = 'slumAlphaI'
+version = 'slumAlphaJ'
 
 def recursiveFiles(path):
 	files=[]
@@ -61,7 +61,14 @@ else:
 			env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
 		)
 
-	env.Alias( 'release', env.Install(installDir, 'README.txt') )
+	env.Alias( 'release',
+			#env.Install(installDir, 'README.txt')
+			env.Command(
+				os.path.join(installDir,"README.txt"),
+				"README.txt",
+				'cat $SOURCE | sed "s/@SLUM@/%s/g" > $TARGET' % version
+			)
+		)
 	zip = env.Command( "%s.zip" % installDir, installDir, "zip -r $TARGET $SOURCE" )
 	env.Alias( 'release', zip )
 

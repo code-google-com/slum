@@ -1,6 +1,6 @@
 SLUM - Shader Language Unified Manager
 author: Hradec (slum@hradec.com)
-Version: alpha_H
+Version: @SLUM@
 website: http://code.google.com/p/slum/
 support: http://groups.google.com/group/slum-project-development-and-support
 

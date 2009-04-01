@@ -14,11 +14,45 @@
   !include "MUI2.nsh"
   !include "installers\nsi_include\envVarUpdate.nsh"
 
+
+Function .onInit
+ 
+  ReadRegStr $R0 HKLM \
+  "Software\Microsoft\Windows\CurrentVersion\Uninstall\slum" \
+  "UninstallString"
+  StrCmp $R0 "" done
+ 
+  MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+  "Slum is already installed. $\n$\nClick `OK` to remove the \
+  previous version or `Cancel` to cancel this upgrade." \
+  IDOK uninst
+  Abort
+ 
+;Run the uninstaller
+uninst:
+  ClearErrors
+  ExecWait '$R0 _?=$INSTDIR' $0 ;$INSTDIR\uninst.exe ; instead of the ExecWait line
+  
+  DetailPrint "some program returned $0"
+
+  ;ExecWait '$R0 _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
+ 
+  ;IfErrors no_remove_uninstaller
+    ;You can either use Delete /REBOOTOK in the uninstaller or add some code
+    ;here to remove the uninstaller. Use a registry key to check
+    ;whether the user has chosen to uninstall. If you are using an uninstaller
+    ;components page, make sure all sections are uninstalled.
+  ;no_remove_uninstaller:
+ 
+done:
+ 
+FunctionEnd
 ;--------------------------------
 
 
+
 ; The name of the installer
-Name "@SLUM@"
+Name "slum"
 
 ; The file to write
 OutFile "@SLUM@_Windows.exe"
@@ -77,22 +111,27 @@ Section "Slum (required)"
   SetOutPath $INSTDIR
 
   ; Put file there
-  File /r "@SLUM@"
+  File /r @SLUM@\*.*
 
+  ; create custom shader dir
+  CreateDirectory $DOCUMENTS\slum
+  
   ; set maya and slum environment vars
-  ${EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"P" "HKLM" "$INSTDIR/@SLUM@/python"
-  ${EnvVarUpdate} $0 "SLUM_PATH" 			"P" "HKLM" "$INSTDIR/@SLUM@"
-  ${EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 	"P" "HKLM" "$INSTDIR/@SLUM@/shader"
+  ${EnvVarUpdate} $0 "PYTHONPATH"		 	"P" "HKLM" "$INSTDIR\python"
+  ${EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"P" "HKLM" "$INSTDIR\python"
+  ${EnvVarUpdate} $0 "SLUM_PATH" 			"P" "HKLM" "$INSTDIR"
+  ${EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 	"P" "HKLM" "$DOCUMENTS\slum"
+  ${EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 	"P" "HKLM" "$INSTDIR\shader"
   ;${EnvVarUpdate} $0 "PATH" "P" "HKCU" "%WinDir%\System32"                            ; Prepend
   ;${EnvVarUpdate} $0 "LIB"  "R" "HKLM" "C:\MyLib"                                     ; Remove
   ;${EnvVarUpdate} $0 "PATH" "R" "HKLM" "C:\Program Files\MyApp-v1.0"  ; Remove path of old rev
   ;${EnvVarUpdate} $0 "PATH" "A" "HKLM" "C:\Program Files\MyApp-v2.0"  ; Append the new one
 
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@SLUM@" "DisplayName" "SLUM (@SLUM@) - Shader Language Unified Manager"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@SLUM@" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@SLUM@" "NoModify" 1
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@SLUM@" "NoRepair" 1
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\slum" "DisplayName" "SLUM (@SLUM@) - Shader Language Unified Manager"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\slum" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\slum" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\slum" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
 
 SectionEnd
@@ -111,17 +150,20 @@ SectionEnd
 ; Uninstaller
 
 Section "Uninstall"
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@SLUM@"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\slum"
 
-  ${un.EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"R" "HKLM" "$INSTDIR/@SLUM@/python"
-  ${un.EnvVarUpdate} $0 "SLUM_PATH" 			"R" "HKLM" "$INSTDIR/@SLUM@"
-  ${un.EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 		"R" "HKLM" "$INSTDIR/@SLUM@/shader"
+  ${un.EnvVarUpdate} $0 "PYTHONPATH" 			"R" "HKLM" "$INSTDIR\python"
+  ${un.EnvVarUpdate} $0 "MAYA_PLUG_IN_PATH" 	"R" "HKLM" "$INSTDIR\python"
+  ${un.EnvVarUpdate} $0 "SLUM_PATH" 			"R" "HKLM" "$INSTDIR"
+  ${un.EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 		"R" "HKLM" "$DOCUMENTS\slum"
+  ${un.EnvVarUpdate} $0 "SLUM_SEARCH_PATH" 		"R" "HKLM" "$INSTDIR\shader"
 
   ; Remove files and uninstaller
-  RMDir /r $INSTDIR\slumAlphaG
+  RMDir /r $INSTDIR\@SLUM@
+  ;RMDir /r  $DOCUMENTS\slum
   Delete $INSTDIR\uninstall.exe
 
   ; Remove directories used
-  RMDir "$INSTDIR"
+  RMDir /r "$INSTDIR"
 
 SectionEnd
