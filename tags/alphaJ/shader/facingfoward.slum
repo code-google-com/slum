@@ -1,0 +1,72 @@
+#
+#  facingForward.slum - a facing ratio shader...
+#						white if facing the camera or black if not
+#
+#	Author: Andre de Souza - feb/2009
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class facingForward(slumSurface):
+	def ID(self):
+		return 101
+
+	def parameters(self):
+		Clamp = parameter( 0, 'Clamp', help = 'Clamp.', max = 1, min = 0 )
+		Invert = parameter( 0, 'Invert', help = 'Invert.', max = 1, min = 0 )
+		Attenuation = parameter( 2, 'Attenuation', help = 'Attenuation. ', max = 10, min = 0 )
+
+		OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
+		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+		return  group( [
+			OutColor,
+			OutTransparency,
+			Clamp,
+			Invert,
+			Attenuation,
+		], name = 'FacingForward' )
+
+
+	def delight(self, node):
+		# 3deligth shader parameters
+		shaderPars = [
+
+			'float Clamp 	= %f;'	% node['Clamp'],
+			'float Invert 	= %f;'	% node['Invert'],
+			'float Attenuation 	= %f;'	% node['Attenuation'],
+			'shader_output varying color _FACINGFORWARD=0;',
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		code=['''
+				extern normal N;
+				extern vector I;
+				vector II = normalize(I);
+				normal NN = normalize(N);
+				float cos = -II.NN;
+				outColor = pow(cos, Attenuation) * (cos/abs(cos));
+				outColor = Clamp  != 0 ? clamp(outColor, 0, 1) : outColor;
+				outColor = Invert != 0 ? 1 - outColor 		   : outColor;
+				_FACINGFORWARD = outColor;
+			''']
+
+		# return a tupple
+		return (shaderPars, code)
