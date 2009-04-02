@@ -1,6 +1,6 @@
 import os, glob, sys
 
-version = 'slumAlphaJ'
+version = 'slumAlphaK'
 
 def recursiveFiles(path):
 	files=[]
@@ -80,6 +80,7 @@ else:
 	if os.environ.has_key('PROGRAMFILES(X86)'):
 		znis['cygwin'] = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe')
 
+	wininstall = None
 	if sys.platform in znis.keys():
 		nsisCompiler = znis[sys.platform]
 		print nsisCompiler
@@ -96,6 +97,28 @@ else:
 	env.Clean( zip, 'doc' )
 	env.Clean( zip, installDir )
 	env.Clean( zip, "%s.zip" % installDir )
+
+	# upload Release
+	# zip package
+	env.Alias('release',
+		env.Command(
+			"%s.released" % zip[0],
+			zip[0],
+			"../../devtools/uploadRelease $SOURCE slum 'multiplatform package' 'Featured,Type-Package,OpSys-All' && touch $TARGET"
+		)
+	)
+	# windows installer
+	env.Alias('release',
+		env.Command(
+			"%s.released" % wininstall[0],
+			wininstall[0],
+			"../../devtools/uploadRelease $SOURCE slum 'windows installer' 'Featured,Type-Installer,OpSys-Windows' && touch $TARGET"
+		)
+	)
+
+	# send release email to discussion group
+	
+
 
 	# generate docs
 	html = env.Command( "docsHtml", "python", 'epydoc -q -o doc --html %s' % os.path.join('$SOURCE','*') )
