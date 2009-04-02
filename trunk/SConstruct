@@ -36,7 +36,7 @@ installDir = version
 rmDir("python", mask='.pyc')
 
 env = Environment()
-if  'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
+if  'test' not in sys.argv and 'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
 		print '''
 
 	you must specify what you want scons to do. (add -c to clean folder)
@@ -75,7 +75,7 @@ else:
 	# windows installer
 	znis = {}
 	try:
-		znis['darwin'] = os.popen('which nsis').readlines()[0].strip()
+		znis['darwin'] = os.popen('which nsis 2>/dev/null').readlines()[0].strip()
 	except: pass
 	if os.environ.has_key('PROGRAMFILES(X86)'):
 		znis['cygwin'] = os.path.join(os.environ['PROGRAMFILES(X86)'], 'NSIS', 'makensis.exe')
@@ -83,7 +83,6 @@ else:
 	wininstall = None
 	if sys.platform in znis.keys():
 		nsisCompiler = znis[sys.platform]
-		print nsisCompiler
 		if os.path.exists(nsisCompiler):
 			os.system("cat installers/windows.nsi | sed 's/@SLUM@/%s/g' > windows.nsi" % version)
 			os.system("cat installers/license.txt | sed 's/@SLUM@/%s/g' > license.txt" % version)
@@ -130,3 +129,12 @@ else:
 	if not os.system('syncFTP.py > .tmp'):
 		ftp  = env.Command( "ftp", 		"python", 'mkdir -p doc ; cd doc ; ~/tools/scripts/syncFTP.py /htdocs/slum/doc' )
 		env.Alias( 'ftp', ftp  )
+	
+		
+	# testing
+	testSlumImport = env.Command(
+		".test",
+		"python/slum/__init__.py",
+		'export PYTHONPATH=./python ; export SLUM_SEARCH_PATH=./shader ; echo "import slum" | python -'
+	)
+	env.Alias( 'test', testSlumImport )
