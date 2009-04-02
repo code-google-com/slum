@@ -1,7 +1,7 @@
 #
 # shaderClasses.py - shader base classes for slumTemplates
 #
-#    Copyright (C) 2008 - Roberto Hradec
+#    Copyright (C) 2008-2009 - Roberto Hradec
 #
 # ---------------------------------------------------------------------------
 #	 This file is part of SLUM.

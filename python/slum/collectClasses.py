@@ -218,7 +218,7 @@ class collectSlumClasses:
 		try: # check if variables are defined or not
 			localClasses
 			onlineClasses
-			if refresh:
+			if refresh or (not localClasses and not onlineClasses):
 				raise
 		except:
 			localClasses, onlineClasses = self._refresh()
@@ -232,18 +232,42 @@ class collectSlumClasses:
 		self.allClasses.update( self.onlineClasses )
 
 	def _refresh(self):
+		global localClasses
+		global onlineClasses
+		def printClasses(classes):
+			idz = []
+			countIDz = {}
+			for classe in classes.keys():
+				id = classes[classe]['ID']
+				idz.append('slum:	found ID %4d Class %s' % ( id,classe))
+				if not countIDz.has_key(id):
+					countIDz[id] = []
+				countIDz[id].append(classe)
+				
+			idz.sort()
+			clash = None
+			for each in idz:
+				id = int( each.split('ID ')[1].split(' C')[0] )
+				print each, 
+				if len(countIDz[id])>1:
+					print "%s> ERROR: ID Clashing -" % ("="*(50-len(each))),countIDz[id]
+					clash = True
+				else:
+					print
+			
+			if clash:
+				global localClasses
+				global onlineClasses
+				localClasses = None
+				onlineClasses = None
+				raise Exception("\n\nClash of templates in slum initialization. Fix it!")
+					
 		print 'slum: local caching...'
 		localClasses = self.local()
-		idz = []
-		for classe in localClasses.keys():
-			idz.append('slum:	found ID %4d Class %s' % (localClasses[classe]['ID'] ,classe))
-			
-		idz.sort()
-		for each in idz:
-			print each
-
+		printClasses(localClasses)
 		print 'slum: online caching'
 		onlineClasses = self.online()
+		printClasses(onlineClasses )
 		print 'slum: all done.'
 		return ( localClasses, onlineClasses )
 
@@ -262,12 +286,14 @@ class collectSlumClasses:
 		# defined inside slum file
 
 		# execute code
+		env = {}
 		registry = None
 		newClasses = None
-		exec 'from slum import *' in locals()
-		registry = dir()
-		exec '\n'.join(slumCode) in locals()
-		newClasses = dir()
+		exec 'from slum import *' in env
+		registry = env.copy()
+		exec '\n'.join(slumCode) in env
+		newClasses = env
+		#print filter(lambda x: x not in registry.keys(), newClasses.keys()), env
 
 		# compare current dir() with old one and get the new ones
 		# loop trough all defined classes inside the current slum file

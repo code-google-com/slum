@@ -1,0 +1,98 @@
+#
+# displaceIt.slum - a fairly simple displacement shader whith a hint of 
+#				 	complexity. This displacement shader allows to displace
+#					geo to any direction, not only the normal direction.
+#
+#    Copyright (C) 2008-2009 - Roberto Hradec
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class displaceIt(slumDisplacement):
+	def ID(self):
+		'''
+			a unique ID that identifys the shader inside slum. If you upload
+			this template to a online repository, this method will be replaced
+			automatically by the repository server, with the next global available ID.
+		'''
+		return 3
+
+	def parameters(self):
+		'''
+			This method defines all the parameter for our shader template. Keep in mind that here you define
+			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+			defines.
+		'''
+		enable 		= parameter( 1, 'enable', help = 'enable or disable this node', ui=ui.checkbox() )
+		amount 		= parameter( 0.1, 'amount', help = 'Amount of displacement', max = 10, min = 0 )
+		value 		= parameter( color(0.0),  'value', help = 'The value to displace.', max = 10, min = 0 )
+		valueType 	= parameter( 0,  'valueType', ui=ui.popup({'Normal Vector Displacement':0,'Value Vector Displacement':1}), help = '"Normal Vector Displacement" displaces geometry over the normal vector direction, using the red channel of the color attached to "value" as length. "Value Vector Displacement" uses each color component of "value" as THE vector to displace geometry. Red is X, Green is Y and Blue is Z of the vector. This allows displacement that goes to any give direction... really powerfull, but kinda difficult to control.' )
+		offset 		= parameter( -0.5, 'offset', help = 'Offset value.' )
+		type 		= parameter( 0,  'type', 	ui=ui.popup({'Displacement':0,'Bump':1}), help = 'displace or just fake it! :)' )
+
+		OutDisplacement = parameter( 0.0, 'displacement', output=True ) 		# required for 3delight displacement shaders
+
+		return  group( [
+			OutDisplacement ,
+			enable,
+			amount,
+			value,
+			valueType,
+			offset,
+			type,
+		], name = 'DisplaceIt!' )
+
+
+	def delight(self, node):
+		'''
+			delight method is were you define the code for this shader, when rendering in 3delight.
+			this is a renderer method. a renderer method should allways return a tupple as:
+			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
+		'''
+		# 3deligth shader parameters
+		shaderPars = [
+			'color value 		= %s;'	% node['value'],
+			'float amount		= %f;'	% node['amount'],
+			'float offset		= %f;'	% node['offset'],
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		if node['enable']:	
+			code=['''
+					extern normal N;
+					extern point P;
+					point newP=P;
+				''']
+			
+			if not node['valueType']:
+				# Normal Vector Displacement
+				code.append('newP += normalize(N) * (value[0]+offset) * amount;')
+			else:
+				# Free Vector Displacement
+				code.append('newP += vector(value+offset) * amount;')
+				
+			code.append('N = calculatenormal(newP);')
+			if not node['type']:
+				# Displace geo
+				code.append('P = newP;')
+	
+		# return a tupple
+		return (shaderPars, code)
+
