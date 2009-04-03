@@ -38,9 +38,10 @@ class displaceIt(slumDisplacement):
 			defines.
 		'''
 		enable 		= parameter( 1, 'enable', help = 'enable or disable this node', ui=ui.checkbox() )
+		coord		= parameter( "world", 'coordsys', help = 'coordinate system where the displacement occurs.' )
 		amount 		= parameter( 0.1, 'amount', help = 'Amount of displacement', max = 10, min = 0 )
 		value 		= parameter( color(0.0),  'value', help = 'The value to displace.', max = 10, min = 0 )
-		valueType 	= parameter( 0,  'valueType', ui=ui.popup({'Normal Vector Displacement':0,'Value Vector Displacement':1}), help = '"Normal Vector Displacement" displaces geometry over the normal vector direction, using the red channel of the color attached to "value" as length. "Value Vector Displacement" uses each color component of "value" as THE vector to displace geometry. Red is X, Green is Y and Blue is Z of the vector. This allows displacement that goes to any give direction... really powerfull, but kinda difficult to control.' )
+		valueType 	= parameter( 0,  'valueType', ui=ui.popup({'Normal Vector Displacement':0,'Value Vector Displacement':1}), help = '"Normal Vector Displacement" displaces geometry over the normal vector direction, using the red channel of the color attached to "value" as length. "Value Vector Displacement" uses each color component of "value" as THE vector to displace geometry. ' )
 		offset 		= parameter( -0.5, 'offset', help = 'Offset value.' )
 		type 		= parameter( 0,  'type', 	ui=ui.popup({'Displacement':0,'Bump':1}), help = 'displace or just fake it! :)' )
 
@@ -49,6 +50,7 @@ class displaceIt(slumDisplacement):
 		return  group( [
 			OutDisplacement ,
 			enable,
+			coord,
 			amount,
 			value,
 			valueType,
@@ -68,6 +70,7 @@ class displaceIt(slumDisplacement):
 			'color value 		= %s;'	% node['value'],
 			'float amount		= %f;'	% node['amount'],
 			'float offset		= %f;'	% node['offset'],
+			'string coordsys	= "%s";'	% node['coordsys'],
 
 			'output varying color outColor=0;',
 			'output varying color outTransparency=0;'
@@ -79,7 +82,8 @@ class displaceIt(slumDisplacement):
 			code.append('''
 					extern normal N;
 					extern point P;
-					point newP=P;
+					N = ntransform(coordsys,N);
+					point newP=transform(coordsys,P);
 				''')
 			
 			if not node['valueType']:
@@ -89,7 +93,10 @@ class displaceIt(slumDisplacement):
 				# Free Vector Displacement
 				code.append('newP += vector(value+offset) * amount;')
 				
-			code.append('N = calculatenormal(newP);')
+			code.append('''
+				newP = transform(coordsys,"current",newP);
+				N = calculatenormal(newP);
+			''')
 			if not node['type']:
 				# Displace geo
 				code.append('P = newP;')

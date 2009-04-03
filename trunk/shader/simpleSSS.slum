@@ -71,7 +71,7 @@ class simpleSSS(slumSurface):
 				{
 					outColor = Ka*ambient() + Kd*diffuse(Nn);
 				}else{
-					outColor = subsurface(P) + Ks * specular(Nf, V, roughness);
+					outColor = subsurface(P) + Ks * specular(Nf, V, Roughness);
 				}
 			''']
 
