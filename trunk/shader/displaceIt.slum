@@ -74,12 +74,13 @@ class displaceIt(slumDisplacement):
 		]
 
 		# shader code
+		code = []
 		if node['enable']:	
-			code=['''
+			code.append('''
 					extern normal N;
 					extern point P;
 					point newP=P;
-				''']
+				''')
 			
 			if not node['valueType']:
 				# Normal Vector Displacement
