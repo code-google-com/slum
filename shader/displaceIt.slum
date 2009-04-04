@@ -72,19 +72,20 @@ class displaceIt(slumDisplacement):
 			'float offset		= %f;'	% node['offset'],
 			'string coordsys	= "%s";'	% node['coordsys'],
 
+			'output varying vector _N=0;',
 			'output varying color outColor=0;',
 			'output varying color outTransparency=0;'
 		]
 
 		# shader code
-		code = []
+		code = ['''
+				extern normal N;
+				extern point P;
+				N = ntransform(coordsys,N);
+				point newP=transform(coordsys,P);
+				_N = normalize(N);
+			''']
 		if node['enable']:	
-			code.append('''
-					extern normal N;
-					extern point P;
-					N = ntransform(coordsys,N);
-					point newP=transform(coordsys,P);
-				''')
 			
 			if not node['valueType']:
 				# Normal Vector Displacement
@@ -96,6 +97,7 @@ class displaceIt(slumDisplacement):
 			code.append('''
 				newP = transform(coordsys,"current",newP);
 				N = calculatenormal(newP);
+				_N = normalize(N);
 			''')
 			if not node['type']:
 				# Displace geo
