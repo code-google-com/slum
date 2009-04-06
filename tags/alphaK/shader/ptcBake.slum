@@ -1,0 +1,64 @@
+#
+# ptcBake.slum - A simple shader that bakes PTC files for PTC based occlusion
+#
+#    Author: Roberto Hradec - march/2009
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class ptcBake(slumSurface):
+	def ID(self):
+		return 112
+
+	def parameters(self):
+		return  group( [
+			parameter( 1, 						'bakePTC'	, ui=ui.checkbox() ),
+			parameter( '<project>/data/<scene>.ptc', 		'file' 		),
+			parameter( 'world', 				'coordsys'	),
+
+			parameter( color(1), 'outColor', output=True ), 	   # required for 3delight surface shaders
+			parameter( color(0), 'outTransparency', output=True ), # required for 3delight surface shaders
+		], name = 'Bake a PTC' )
+
+
+
+	def delight(self, node):
+		# 3deligth shader parameters
+		shaderPars = [
+			'string file = "%s";' % node['file'],
+			'string coordsys = "%s";' % node['coordsys'],
+
+			'output varying color outColor=0;',
+			'output varying color outTransparency=0;'
+		]
+
+		# shader code
+		# base variables
+		code=['''
+			extern color Cs;
+			outColor = color(0,0,1);
+			outTransparency = 0.01;
+		''']
+		if node['bakePTC']:
+			code.append('''
+				extern point P;
+				extern normal N;
+				bake3d( file, "", P, N,	"coordsystem", coordsys, "interpolate", 1 );
+			''')
+
+		# return a tupple
+		return (shaderPars, code)

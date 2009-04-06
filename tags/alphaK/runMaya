@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+import os,sys
+
+if not os.environ.has_key('MAYA_PLUG_IN_PATH'):
+	os.environ['MAYA_PLUG_IN_PATH'] = ""
+
+maya = 'maya'
+if os.environ.has_key('MAYA_APP_PATH'):
+	maya = '%s/bin/maya' % os.environ['MAYA_APP_PATH']
+
+scene = ''
+if len(sys.argv)>1:
+	scene = sys.argv[1]
+
+if os.environ.has_key('COMSPEC'):
+	os.environ['MAYA_PLUG_IN_PATH'] += ';'+os.popen('cygpath -wa ./python').readlines()[0].strip()
+	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('cygpath -wa ./shader').readlines()[0].strip()
+	scene = os.popen('cygpath -wa "%s"' % scene).readlines()[0].strip().replace('\\','\\\\')
+	#maya = os.popen('cygpath -wa "%s"' % maya).readlines()[0].strip()
+	#maya += '.exe'
+else:
+	os.environ['MAYA_PLUG_IN_PATH'] += os.path.pathsep+os.popen('echo `pwd`/python').readlines()[0].strip()
+	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/shader').readlines()[0].strip()
+
+
+	
+
+cmd = '"%s" %s' % (maya,scene)
+print cmd
+os.system(cmd)
