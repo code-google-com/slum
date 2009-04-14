@@ -61,6 +61,11 @@ else:
 			env.Install(os.path.join(installDir, 'shader', os.path.dirname(each.replace('shader'+os.sep,''))), each)
 		)
 
+	for each in recursiveFiles('tests'):
+		env.Alias( 'release',
+			env.Install(os.path.join(installDir, 'tests', os.path.dirname(each.replace('tests'+os.sep,''))), each)
+		)
+
 	env.Alias( 'release',
 			#env.Install(installDir, 'README.txt')
 			env.Command(
