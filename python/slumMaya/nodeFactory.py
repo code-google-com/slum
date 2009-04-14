@@ -57,26 +57,26 @@ class nodeFactory:
 		for classe in self.classes.keys():
 
 			nodeTypeName			= 'slum_%s' % classe
-			try:
-				nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
-			except:
-				nodeType 				= OpenMayaMPx.MPxNode.kHwShaderNode
-			nodeType 				= OpenMayaMPx.MPxNode.kHwShaderNode
+			#try:
+			#	nodeType 			= OpenMayaMPx.MPxNode.kHardwareShader
+			#except:
+			#	nodeType 			= OpenMayaMPx.MPxNode.kHwShaderNode
+			#nodeType 				= OpenMayaMPx.MPxNode.kHwShaderNode
+
+			nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
 			nodeCreator 			= shaderSurface.nodeCreator
 			nodeInitializer 		= shaderSurface.nodeInitializer
 			nodeInitializeCallback 	= shaderSurface.slumInitializer
 
-			'''
-			// Don't initialize swatches in batch mode
-			if (MGlobal::mayaState() != MGlobal::kBatch)
-			{
-					static MString swatchName("hlslRenderSwatchGen");
-					MSwatchRenderRegister::registerSwatchRender(swatchName, MHWShaderSwatchGenerator::createObj );
-					UserClassify = MString( "shader/surface/utility/:swatch/"+swatchName );
-			}
-			'''
-			swatchName 				= ''
-			swatchName 				= ":swatch/%s" % OpenMayaUI.MHWShaderSwatchGenerator.initialize()
+
+			# Don't initialize swatches in batch mode
+			if OpenMaya.MGlobal.mayaState() != OpenMaya.MGlobal.kBatch:
+					swatchName = "%sRenderSwatchGen" % nodeTypeName
+					#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName, OpenMayaUI.MHWShaderSwatchGenerator.createObj )
+					swatchName = "/:swatch/%s" % swatchName
+
+			#swatchName 				= ''
+			#swatchName 				= "/:swatch/%s" % OpenMayaUI.MHWShaderSwatchGenerator.initialize()
 			#swatchName = ":swatch/slumSwatch%s" % classe
 			#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName,
 			#			OpenMayaUI.MHWShaderSwatchGenerator.createObj );
