@@ -29,6 +29,8 @@ class ptcBake(slumSurface):
 			parameter( 1, 						'bakePTC'	, ui=ui.checkbox() ),
 			parameter( '<project>/data/<scene>.ptc', 		'file' 		),
 			parameter( 'world', 				'coordsys'	),
+			parameter( color(1.0), 	 'valueToBake', help="The value to bake to the ptc." ),
+			parameter( "_radiosity", 'valueName', help="The name the value will have inside the ptc file. The default _radiosity is used by indirectDiffuse to calculate point based color bleeding." 	),
 
 			parameter( color(1), 'outColor', output=True ), 	   # required for 3delight surface shaders
 			parameter( color(0), 'outTransparency', output=True ), # required for 3delight surface shaders
@@ -39,8 +41,10 @@ class ptcBake(slumSurface):
 	def delight(self, node):
 		# 3deligth shader parameters
 		shaderPars = [
-			'string file = "%s";' % node['file'],
-			'string coordsys = "%s";' % node['coordsys'],
+			'string file = "%s";' 		% node['file'],
+			'string coordsys = "%s";' 	% node['coordsys'],
+			'color valueToBake = %s;' 	% node['valueToBake'],
+			'string valueName = "%s";' 	% node['valueName'],
 
 			'output varying color outColor=0;',
 			'output varying color outTransparency=0;'
@@ -50,14 +54,14 @@ class ptcBake(slumSurface):
 		# base variables
 		code=['''
 			extern color Cs;
-			outColor = color(0,0,1);
+			outColor = valueToBake;
 			outTransparency = 0.01;
 		''']
 		if node['bakePTC']:
 			code.append('''
 				extern point P;
 				extern normal N;
-				bake3d( file, "", P, N,	"coordsystem", coordsys, "interpolate", 1 );
+				bake3d( file, "", P, N,	"coordsystem", coordsys, "interpolate", 1, valueName, valueToBake );
 			''')
 
 		# return a tupple
