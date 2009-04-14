@@ -35,7 +35,7 @@ installDir = version
 #rmDir(installDir)
 rmDir("python", mask='.pyc')
 
-env = Environment()
+env = Environment(PATH=os.environ['PATH'])
 if  'test' not in sys.argv and 'release' not in sys.argv and 'doc' not in sys.argv and	'ftp' not in sys.argv and '-c' not in sys.argv:
 		print '''
 
@@ -116,21 +116,22 @@ else:
 	)
 
 	# send release email to discussion group
-	
+
 
 
 	# generate docs
-	html = env.Command( "docsHtml", "python", 'epydoc -q -o doc --html %s' % os.path.join('$SOURCE','*') )
-	pdf  = env.Command( "docsPdf", 	"python", 'epydoc -q -o doc --pdf  %s' % os.path.join('$SOURCE','*') )
+	#html = env.Command( "docsHtml", "python", 'echo $PATH:/usr/bin/env epydoc' )
+	html = env.Command( "docsHtml", "python", 'bash -i -l -c "epydoc -q -o doc --html %s"' % os.path.join('$SOURCE','*') )
+	pdf  = env.Command( "docsPdf", 	"python", 'bash -i -l -c "epydoc -q -o doc --pdf  %s"' % os.path.join('$SOURCE','*') )
 	env.Alias( 'doc', html )
 	env.Alias( 'doc', pdf  )
 
 	# ftp docs
 	if not os.system('syncFTP.py > .tmp'):
-		ftp  = env.Command( "ftp", 		"python", 'mkdir -p doc ; cd doc ; ~/tools/scripts/syncFTP.py /htdocs/slum/doc' )
+		ftp  = env.Command( "ftp", 		html, 'mkdir -p doc ; cd doc ; ~/tools/scripts/syncFTP.py /htdocs/slum/doc' )
 		env.Alias( 'ftp', ftp  )
-	
-		
+
+
 	# testing
 	testSlumImport = env.Command(
 		".test",
