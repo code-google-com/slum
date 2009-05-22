@@ -24,8 +24,10 @@ else:
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/shader').readlines()[0].strip()
 
 
-	
+os.environ['MAYA_CMD_FILE_OUTPUT']='/tmp/mayalog'
+os.environ['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = "1"
 
-cmd = '"%s" %s' % (maya,scene)
+
+cmd = '"%s"  %s' % (maya,scene)
 print cmd
 os.system(cmd)

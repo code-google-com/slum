@@ -20,7 +20,7 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
-
+import copy
 import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
 import maya.OpenMayaUI as OpenMayaUI
@@ -40,6 +40,29 @@ userClassify = {
 	'light' 		: 'light',
 }
 
+class swatchRender(OpenMayaRender.MSwatchRenderBase):
+	def __init__(self, mobj, mobjRender, res):
+		OpenMayaRender.MSwatchRenderBase(self, mobj, mobjRender, res)
+		print mobj, mobjRender, res
+		pass
+	def doIteration (self):
+		pass
+	def swatchNode (self):
+		#returns the node for which the swatch is required to be generated
+		pass
+	def node (self):
+		#returns the node used to compute the swatch
+		pass
+	def resolution (self):
+		#returns the expected resolution of the swatch image
+		pass
+	def image (self):
+		# returns the swatch image
+		pass
+	def createObj(self):
+		pass
+
+
 class nodeFactory:
 	def __init__(self, mplugin, pluginName, PluginNodeId, searchPath = ['SLUM_SEARCH_PATH', 'MAYA_SCRIPT_PATH', 'PYTHONPATH'] ):
 		# call generic slum code to find installed classes
@@ -54,6 +77,7 @@ class nodeFactory:
 		'''
 			loop trough all gathered slum classes and register a new node type for each one
 		'''
+		xxx = OpenMayaUI.MHWShaderSwatchGenerator.initialize()
 		for classe in self.classes.keys():
 
 			nodeTypeName			= 'slum_%s' % classe
@@ -61,9 +85,9 @@ class nodeFactory:
 			#	nodeType 			= OpenMayaMPx.MPxNode.kHardwareShader
 			#except:
 			#	nodeType 			= OpenMayaMPx.MPxNode.kHwShaderNode
-			#nodeType 				= OpenMayaMPx.MPxNode.kHwShaderNode
+			nodeType 				= OpenMayaMPx.MPxNode.kHwShaderNode
 
-			nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
+			#nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
 			nodeCreator 			= shaderSurface.nodeCreator
 			nodeInitializer 		= shaderSurface.nodeInitializer
 			nodeInitializeCallback 	= shaderSurface.slumInitializer
@@ -72,11 +96,22 @@ class nodeFactory:
 			# Don't initialize swatches in batch mode
 			if OpenMaya.MGlobal.mayaState() != OpenMaya.MGlobal.kBatch:
 					swatchName = "%sRenderSwatchGen" % nodeTypeName
-					#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName, OpenMayaUI.MHWShaderSwatchGenerator.createObj )
+					x = copy.deepcopy(OpenMayaUI.MHWShaderSwatchGenerator.createObj)
+					#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName, swatchRender.createObj )
 					swatchName = "/:swatch/%s" % swatchName
+					print swatchName
+
+
+#_0849aa18_p_MString ['__class__', '__cmp__', '__delattr__', '__doc__', '__getattribute__', '__hash__', '__hex__', '__init__', '__int__', '__long__', '__new__', '__oct__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__str__', 'acquire', 'append', 'disown', 'next', 'own']
+#<Swig Object of type 'MString *' at 0x18aa4908>
 
 			#swatchName 				= ''
-			#swatchName 				= "/:swatch/%s" % OpenMayaUI.MHWShaderSwatchGenerator.initialize()
+			#swatchName 				= "/:swatch/%s" %  OpenMayaUI.MHWShaderSwatchGenerator.initialize()
+			#xxx = OpenMayaUI.MHWShaderSwatchGenerator.initialize()
+			#print xxx, dir(xxx)
+			#print xxx.__repr__()
+			#print xxx.__class__
+			#print xxx.next()
 			#swatchName = ":swatch/slumSwatch%s" % classe
 			#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName,
 			#			OpenMayaUI.MHWShaderSwatchGenerator.createObj );
