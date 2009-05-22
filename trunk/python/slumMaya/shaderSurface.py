@@ -28,8 +28,8 @@ from maya.mel import eval as meval
 import shaderBase
 
 try:
-	mayaBaseClass = OpenMayaMPx.MPxHardwareShader
-	#mayaBaseClass = OpenMayaMPx.MPxHwShaderNode
+	#mayaBaseClass = OpenMayaMPx.MPxHardwareShader
+	mayaBaseClass = OpenMayaMPx.MPxHwShaderNode
 except:
 	mayaBaseClass = OpenMayaMPx.MPxNode
 
