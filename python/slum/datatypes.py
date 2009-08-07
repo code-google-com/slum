@@ -23,50 +23,95 @@
 import math
 
 class color:
-	''' slum datatype to hold color data.
-	The "internal" variable is a list that defines all the possible keys for this datatype. For color,
-	they are [r,g,b], but they can be overriden by derivated classes, like vector, which defines it as
-	x,y,z.
-	This datatype is defined to simplify a shader implementation, specially when defining slum
-	shader parameters.'''
+    ''' slum datatype to hold color data.
+    The "internal" variable is a list that defines all the possible keys for this datatype. For color,
+    they are [r,g,b], but they can be overriden by derivated classes, like vector, which defines it as
+    x,y,z.
+    This datatype is defined to simplify a shader implementation, specially when defining slum
+    shader parameters.'''
 
-	internal = ['r','g','b']
-	def __init__(self, data=0, *args):
-		self.checkValue(data)
-		for each in self.internal:
-			self.__dict__[each] = data
-		nargs = len(args)
-		if nargs:
-			if nargs==len(self.internal)-1:
-				internalIndex=1
-				for each in args:
-					self.checkValue(each)
-					self.__dict__[self.internal[internalIndex]] = each
-					internalIndex += 1
-			else:
-				raise Exception('dataype requires 1 or %d parameters in initialization. Received only %d parameters.' % (len(self.internal),nargs+1))
-	def checkKey(self, key):
-		if key>len(self.internal) or key<0:
-			raise Exception('Color values can only have 3 elements. Element %d not valid' % key )
-	def checkValue(self, value):
-		if type(value) not in [int,long,float]:
-			raise Exception('Data type "%s" not supported' % type(value))
-	def __getitem__(self, key):
-		self.checkKey(key)
-		return self.__dict__[self.internal[key]]
-	def __setitem__(self, key, value):
-		self.checkKey(key)
-		self.checkValue(value)
-		self.__dict__[self.internal[key]] = value
-	def __repr__(self):
-		data = []
-		for each in self.internal:
-			data.append("%s" % str(self.__dict__[each]))
-		return '%s(%s)' % (self.__class__.__name__,','.join(data))
-	def __len__(self):
-		return 3
-	def __delitem__(self, key):
-		pass
+    internal = ['r','g','b']
+    def __init__(self, data=0, *args):
+        self.checkValue(data)
+        for each in self.internal:
+            self.__dict__[each] = data
+        nargs = len(args)
+        if nargs:
+            if nargs==len(self.internal)-1:
+                internalIndex=1
+                for each in args:
+                    self.checkValue(each)
+                    self.__dict__[self.internal[internalIndex]] = each
+                    internalIndex += 1
+            else:
+                raise Exception('dataype requires 1 or %d parameters in initialization. Received only %d parameters.' % (len(self.internal),nargs+1))
+    def checkKey(self, key):
+        if key>len(self.internal) or key<0:
+            raise Exception('dataype values can only have 3 elements. Element %d not valid' % key )
+    def checkValue(self, value):
+        if type(value) not in [int,long,float]:
+            raise Exception('dataype "%s" not supported' % type(value))
+    def __getitem__(self, key):
+        self.checkKey(key)
+        return self.__dict__[self.internal[key]]
+    def __setitem__(self, key, value):
+        self.checkKey(key)
+        self.checkValue(value)
+        self.__dict__[self.internal[key]] = value
+    def __repr__(self):
+        data = []
+        for each in self.internal:
+            data.append("%s" % str(self.__dict__[each]))
+        return '%s(%s)' % (self.__class__.__name__,','.join(data))
+    def __len__(self):
+        return 3
+    def __delitem__(self, key):
+        pass
+    def __add__(self, x):
+        d=[]
+        if x.__class__ in [color, vector, point, normal]:
+            count = 0
+            for each in self.internal:
+                d.append(  self.__dict__[each] + x.__dict__[x.internal[count]] )
+                count += 1
+        else:
+            for each in self.internal:
+                d.append(  self.__dict__[each] + x )
+        return self.__class__( d[0], d[1], d[2] )
+
+    def __mul__(self, x):
+        d=[]
+        if x.__class__ in [color, vector, point, normal]:
+            count = 0
+            for each in self.internal:
+                d.append(  self.__dict__[each] * x.__dict__[x.internal[count]] )
+                count += 1
+        else:
+            for each in self.internal:
+                d.append(  self.__dict__[each] * x )
+        return self.__class__( d[0], d[1], d[2] )
+
+    def __div__(self, x):
+        d=[]
+        if x.__class__ in [color, vector, point, normal]:
+            count = 0
+            for each in self.internal:
+                d.append(  self.__dict__[each] / x.__dict__[x.internal[count]] )
+                count += 1
+        else:
+            for each in self.internal:
+                d.append(  self.__dict__[each] / x )
+        return self.__class__( d[0], d[1], d[2] )
+
+    def __sub__(self, x):
+        return self.__add__(-x)
+
+    def __neg__(self):
+        d = []
+        for each in self.internal:
+            d.append( -self.__dict__[each] )
+        return self.__class__( d[0], d[1], d[2] )
+        
 
 class vector(color):
 	'''
@@ -97,8 +142,24 @@ class normal(vector):
 	pass
 
 class point(vector):
-	'''
-		slum datatype to hold point data.
-		its exactly like vector. Its defined just as a placeholder for people used to rsl. (like me :D)
-	'''
-	pass
+    '''
+        slum datatype to hold point data.
+        its exactly like vector. Its defined just as a placeholder for people used to rsl. (like me :D)
+    '''
+    pass
+
+
+class bound:
+    def __init__(self, min, max):
+        if min.__class__ != vector or max.__class__ != vector:
+            raise Exception("min/max not a vector datatype.")
+        self.min = min
+        self.max = max
+    def size(self):
+        return self.max - self.min
+    def center(self):
+        return self.min + ( self.size() ) * 0.5
+    
+    
+    
+    
