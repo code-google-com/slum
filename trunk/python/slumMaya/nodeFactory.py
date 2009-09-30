@@ -96,10 +96,10 @@ class nodeFactory:
 			# Don't initialize swatches in batch mode
 			if OpenMaya.MGlobal.mayaState() != OpenMaya.MGlobal.kBatch:
 					swatchName = "%sRenderSwatchGen" % nodeTypeName
-					x = copy.deepcopy(OpenMayaUI.MHWShaderSwatchGenerator.createObj)
+					#x = copy.deepcopy(OpenMayaUI.MHWShaderSwatchGenerator.createObj)
 					#OpenMayaRender.MSwatchRenderRegister.registerSwatchRender(swatchName, swatchRender.createObj )
 					swatchName = "/:swatch/%s" % swatchName
-					print swatchName
+					#print swatchName
 
 
 #_0849aa18_p_MString ['__class__', '__cmp__', '__delattr__', '__doc__', '__getattribute__', '__hash__', '__hex__', '__init__', '__int__', '__long__', '__new__', '__oct__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__str__', 'acquire', 'append', 'disown', 'next', 'own']

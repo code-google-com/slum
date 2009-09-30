@@ -378,6 +378,7 @@ def test(customCamera=False):
 	import maya
 	import slumMaya
 
+
 	window	= maya.cmds.window()
 	form 	= maya.cmds.formLayout()
 	editor	= maya.cmds.customGLView()
