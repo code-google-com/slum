@@ -40,11 +40,11 @@ def initializePlugin(mobject):
 	)
 	nodeFactory.register()
 
-	slumMaya.customGLView.initialize(mplugin)
+	#slumMaya.customGLView.initialize(mplugin)
 
 def uninitializePlugin(mobject):
 	global nodeFactory
 	mplugin = OpenMayaMPx.MFnPlugin(mobject)
 	nodeFactory.unregister()
 
-	slumMaya.customGLView.uninitialize(mplugin)
+	#slumMaya.customGLView.uninitialize(mplugin)

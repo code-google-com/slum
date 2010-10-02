@@ -22,7 +22,7 @@
 # ---------------------------------------------------------------------------
 
 
-class occlusion(slumSurface):
+class occlusion(slumColor):
 	def ID(self):
 		'''
 			a unique ID that identifys the shader inside slum. If you upload
@@ -48,6 +48,13 @@ class occlusion(slumSurface):
 		Bias 		= parameter( 0.01,	'Bias', help = 'A offset bias to avoid geometry to self intersect.' )
 		TraceSet 	= parameter( '-', 	'TraceSet', help = '''You can create a maya set with the geometry you want to raytrace. The put the name of that set in here so it will only raytrace against the geometry in the set. You can specify multiple sets using comma. Prefix the set name with '-' to ignore it. The default '-' only makes it use all sets (including defaultObjectSet)''' )
 
+		outType 	= parameter( 0,	'OutputAs', ui=ui.popup({
+													'Ambient Occlusion':0,
+													'Bent Normal Normalized':1,
+													'Bent Normal with AO as Lenght':2,
+													'Tangent Bent Normal with AO as Lenght':3,
+												}), help = 'How to outpu the calculated AO.' )
+
 		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
 		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
@@ -64,7 +71,10 @@ class occlusion(slumSurface):
 				ConeAngle,
 				Bias,
 				TraceSet
-			], name = 'Ray Trace Parameters' )
+			], name = 'Ray Trace Parameters' ),
+			group( [
+				outType,
+			], name = 'Output Type' )
 		], name = 'Ambient Occlusion' )
 
 
@@ -84,7 +94,7 @@ class occlusion(slumSurface):
 			'float MaxDistance		= %f;'		% node['MaxDistance'],
 			'float ConeAngle		= %f;'		% node['ConeAngle'],
 			'float Bias				= %f;'		% node['Bias'],
-			#'string TraceSet		= "%s";'	% node['TraceSet'],
+			'string TraceSet		= "%s";'	% node['TraceSet'],
 
 			'output varying color outColor=0;',
 			'output varying color outTransparency=0;'
@@ -95,23 +105,35 @@ class occlusion(slumSurface):
 				extern normal N;
 				extern point P;
 				float occ = 0;
+				vector bn = 0;
 				outColor = 0;
 			''']
 
 		if node['Enable']:
 			code.append('''
-				occ = occlusion( P, normalize(N), Samples,
+				occ = 1-occlusion( P, normalize(N), Samples,
 					"maxdist", MaxDistance,
 					"coneangle", radians(ConeAngle),
-					//"subset", TraceSet,
-					//"environmentdir", bentnormal,
+					"subset", TraceSet,
+					"environmentdir", bn,
 					"label", "occlusion",
 					"bias", Bias,
 					"adaptive", Adaptive
 				);
 			''')
 
-		code.append('outColor = 1-occ;')
+		if node['OutputAs'] is 0:
+			code.append('outColor = occ;')
+		elif node['OutputAs'] is 1:
+			code.append('outColor = color(normalize(bn)*0.5+0.5);')
+		elif node['OutputAs'] is 2:
+			code.append('outColor = color((normalize(bn)*0.5+0.5)*occ);')
+
+		elif node['OutputAs'] is 3:
+			code.append('''
+				bn = normalize(bn);
+				outColor = color((bn*0.5+0.5)*occ);
+			''')
 
 		# return a tupple
 		return (shaderPars, code)
