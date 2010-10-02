@@ -21,59 +21,62 @@
 # ---------------------------------------------------------------------------
 
 class simpleSSS(slumSurface):
-	def ID(self):
-		return 100
+    def ID(self):
+            return 100
 
-	def parameters(self):
-		Ks = parameter( 0.7, 'Ks', help = 'Scatering Specular.', max = 10, min = 0 )
-		Kd = parameter( 0.6, 'Kd', help = 'Scatering Difuse.', max = 10, min = 0 )
-		Ka = parameter( 0.1, 'Ka', help = 'Scaterin Specular.', max = 10, min = 0 )
-		Roughness = parameter( 0.4, 'Roughness', help = 'Scaterin Specular Roughness. ', max = 10, min = 0 )
+    def parameters(self):
+            SSSIntensity = parameter( 1.0, 'SSSIntensity', help = 'Scatering output intensity', max = 100, min = 0 )
+            Kd  = parameter( 0.6, 'Kd', help = 'Scatering Difuse.', max = 10, min = 0 )
+            Ka  = parameter( 0.1, 'Ka', help = 'Scaterin Ambient.', max = 10, min = 0 )
+            Ks  = parameter( 0.7, 'Ks', help = 'Scatering Specular.', max = 10, min = 0 )
+            Roughness = parameter( 0.4, 'Roughness', help = 'Scaterin Specular Roughness. ', max = 10, min = 0 )
 
-		OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
-		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+            OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
+            OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
-		return  group( [
-			OutColor,
-			OutTransparency,
-			Ks,
-			Kd,
-			Ka,
-			Roughness,
-		], name = 'Simple SSS' )
+            return  group( [
+                    OutColor,
+                    OutTransparency,
+                    SSSIntensity,
+                    Ks,
+                    Kd,
+                    Ka,
+                    Roughness,
+            ], name = 'Simple SSS' )
 
 
-	def delight(self, node):
-		# 3deligth shader parameters
-		shaderPars = [
-			'float Ks 			= %f;'	% node['Ks'],
-			'float Kd 			= %f;'	% node['Kd'],
-			'float Ka 			= %f;'	% node['Ka'],
-			'float Roughness 	= %f;'	% node['Roughness'],
+    def delight(self, node):
+            # 3deligth shader parameters
+            shaderPars = [
+                    'float SSSIntensity		= %f;'	% node['SSSIntensity'],
+                    'float Ks 			= %f;'	% node['Ks'],
+                    'float Kd 			= %f;'	% node['Kd'],
+                    'float Ka 			= %f;'	% node['Ka'],
+                    'float Roughness 	        = %f;'	% node['Roughness'],
 
-			'output varying color outColor 			= 0;',
-			'output varying color outTransparency	= 0;'
-		]
+                    'output varying color outColor 			= 0;',
+                    'output varying color outTransparency	= 0;'
+            ]
 
-		# shader code
-		code=['''
-				extern normal N;
-				extern point  P;
-				extern vector I;
-				normal Nn = normalize(N);
-				normal Nf = faceforward(Nn, I);
-				vector V  = normalize(-I);
+            # shader code
+            code=['''
+                            extern normal N;
+                            extern point  P;
+                            extern vector I;
+                            normal Nn = normalize(N);
+                            normal Nf = faceforward(Nn, I);
+                            vector V  = normalize(-I);
 
-				uniform string raytype = "unknown";
-				rayinfo( "type", raytype );
+                            uniform string raytype = "unknown";
+                            rayinfo( "type", raytype );
 
-				if( raytype == "subsurface" )
-				{
-					outColor = Ka*ambient() + Kd*diffuse(Nn);
-				}else{
-					outColor = subsurface(P) + Ks * specular(Nf, V, Roughness);
-				}
-			''']
+                            if( raytype == "subsurface" )
+                            {
+                                    outColor = Ka*ambient() + Kd*diffuse(Nn) + Ks * specular(Nf, V, Roughness);
+                            }else{
+                                    outColor = subsurface(P) * SSSIntensity;
+                            }
+                    ''']
 
-		# return a tupple
-		return (shaderPars, code)
+            # return a tupple
+            return (shaderPars, code)

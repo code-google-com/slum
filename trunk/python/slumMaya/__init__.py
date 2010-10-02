@@ -23,7 +23,7 @@ from nodeFactory import *
 from shaderBase import *
 from classNode import *
 from slumNode import *
-import customGLView
+#import customGLView
 
 renderers=[]
 from delight import *

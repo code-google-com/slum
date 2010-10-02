@@ -85,11 +85,9 @@ class nodeFactory:
 			#	nodeType 			= OpenMayaMPx.MPxNode.kHardwareShader
 			#except:
 			#	nodeType 			= OpenMayaMPx.MPxNode.kHwShaderNode
-			nodeType 				= OpenMayaMPx.MPxNode.kHwShaderNode
-
-			#nodeType 				= OpenMayaMPx.MPxNode.kHardwareShader
-			nodeCreator 			= shaderSurface.nodeCreator
-			nodeInitializer 		= shaderSurface.nodeInitializer
+			nodeType 		= OpenMayaMPx.MPxNode.kHwShaderNode
+			nodeCreator 		= shaderSurface.nodeCreator
+			nodeInitializer 	= shaderSurface.nodeInitializer
 			nodeInitializeCallback 	= shaderSurface.slumInitializer
 
 

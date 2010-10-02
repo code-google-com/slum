@@ -27,7 +27,7 @@ import md5 as __md5
 
 
 defaultSearchPath = 'SLUM_SEARCH_PATH'
-defaultOnlineRepositorie = 'http://slum.hradec.com/repositorie'
+defaultOnlineRepositorie = 'http://slum.hradec.com/repository'
 
 #shortcut methods
 def all():
@@ -160,193 +160,193 @@ def checkMD5(md5data, file):
 	return md5data == getMD5( ''.join( _readSlumFile(file) ) )
 
 class collectSlumClasses:
-	'''
-		low level class (shouldn't be directly used - refer to high level functions/classes)
-		class responsible for deal with slum files and classes
-		initializing a new class object will trigger the search of *.slum files in the local search path and online repositories.
-		a cache system is in place to avoid un-necessary re-caching by clients.
-		clients dont need to care about it. just re-create the class and the new object will pick up the data from the cache
-		automatically, unless refresh parameter is True.
-	'''
-	def __init__(self, refresh=None, searchPath = None, onlineRepositories = None):
-		'''
-			gathers slum classes from local disk/network and online repositories
+        '''
+                low level class (shouldn't be directly used - refer to high level functions/classes)
+                class responsible for deal with slum files and classes
+                initializing a new class object will trigger the search of *.slum files in the local search path and online repositories.
+                a cache system is in place to avoid un-necessary re-caching by clients.
+                clients dont need to care about it. just re-create the class and the new object will pick up the data from the cache
+                automatically, unless refresh parameter is True.
+        '''
+        def __init__(self, refresh=None, searchPath = None, onlineRepositories = None):
+                '''
+                        gathers slum classes from local disk/network and online repositories
 
-			this class stores the gathered classes and search paths as global variables, so
-			if the class is re-created, it will retain the data from a previous object. (a sort of cache)
+                        this class stores the gathered classes and search paths as global variables, so
+                        if the class is re-created, it will retain the data from a previous object. (a sort of cache)
 
-			this is very useful when using this class in clients, so a call for the class in a initialization context
-			will store the data, and the data can be quickly retrieve later in a diferent context, even whitout the original
-			search paths.
+                        this is very useful when using this class in clients, so a call for the class in a initialization context
+                        will store the data, and the data can be quickly retrieve later in a diferent context, even whitout the original
+                        search paths.
 
-			also, a call to _refresh method (or creating the class object using the refresh parameter = True)
-			will refresh the class caches using the cached search paths. This way,
-			the search paths only need to be defined in the initialization context. As the class caches are global, even
-			the _refresh method can be called from a totally separated context.
+                        also, a call to _refresh method (or creating the class object using the refresh parameter = True)
+                        will refresh the class caches using the cached search paths. This way,
+                        the search paths only need to be defined in the initialization context. As the class caches are global, even
+                        the _refresh method can be called from a totally separated context.
 
-			This cache mechanism frees the client from the tedious and error prone tasks of store all this data so it can
-			be accessed in diferent contexts. It also speeds up the whole proccess, avoiding multiple un-necessary
-			disk/network accesses.
-		'''
-		global searchPathCache
-		global onlineRepositoriesCache
+                        This cache mechanism frees the client from the tedious and error prone tasks of store all this data so it can
+                        be accessed in diferent contexts. It also speeds up the whole proccess, avoiding multiple un-necessary
+                        disk/network accesses.
+                '''
+                global searchPathCache
+                global onlineRepositoriesCache
 
-		# it paths specified, update caches
-		if searchPath:
-			searchPathCache	= searchPath
-		else:
-			searchPathCache	= defaultSearchPath
+                # it paths specified, update caches
+                if searchPath:
+                        searchPathCache	= searchPath
+                else:
+                        searchPathCache	= defaultSearchPath
 
-		if onlineRepositories:
-			onlineRepositoriesCache = onlineRepositories
-		else:
-			onlineRepositoriesCache = defaultOnlineRepositorie
+                if onlineRepositories:
+                        onlineRepositoriesCache = onlineRepositories
+                else:
+                        onlineRepositoriesCache = defaultOnlineRepositorie
 
-		# store in the class for later use by methods
-		self.searchPath 		= searchPathCache
-		self.onlineRepositories	= onlineRepositoriesCache
+                # store in the class for later use by methods
+                self.searchPath 		= searchPathCache
+                self.onlineRepositories	= onlineRepositoriesCache
 
-		# makes sure searchpaths are lists
-		if type(self.searchPath) == str:
-			self.searchPath = [self.searchPath]
-		if type(self.onlineRepositories) == str:
-			self.onlineRepositories = [self.onlineRepositories]
+                # makes sure searchpaths are lists
+                if type(self.searchPath) == str:
+                        self.searchPath = [self.searchPath]
+                if type(self.onlineRepositories) == str:
+                        self.onlineRepositories = [self.onlineRepositories]
 
-		#cache classes if refresh is set or caches are empty
-		global localClasses
-		global onlineClasses
-		try: # check if variables are defined or not
-			localClasses
-			onlineClasses
-			if refresh or (not localClasses and not onlineClasses):
-				raise
-		except:
-			localClasses, onlineClasses = self._refresh()
+                #cache classes if refresh is set or caches are empty
+                global localClasses
+                global onlineClasses
+                try: # check if variables are defined or not
+                        localClasses
+                        onlineClasses
+                        if refresh or (not localClasses and not onlineClasses):
+                                raise
+                except:
+                        localClasses, onlineClasses = self._refresh()
 
-		# store then separeted for now...
-		self.localClasses  	= localClasses
-		self.onlineClasses 	= onlineClasses
+                # store then separeted for now...
+                self.localClasses  	= localClasses
+                self.onlineClasses 	= onlineClasses
 
-		# combine then
-		self.allClasses = self.localClasses
-		self.allClasses.update( self.onlineClasses )
+                # combine then
+                self.allClasses = self.localClasses
+                self.allClasses.update( self.onlineClasses )
 
-	def _refresh(self):
-		global localClasses
-		global onlineClasses
-		def printClasses(classes):
-			idz = []
-			countIDz = {}
-			for classe in classes.keys():
-				id = classes[classe]['ID']
-				idz.append('slum:	found ID %4d Class %s' % ( id,classe))
-				if not countIDz.has_key(id):
-					countIDz[id] = []
-				countIDz[id].append(classe)
-				
-			idz.sort()
-			clash = None
-			for each in idz:
-				id = int( each.split('ID ')[1].split(' C')[0] )
-				print each, 
-				if len(countIDz[id])>1:
-					print "%s> ERROR: ID Clashing -" % ("="*(50-len(each))),countIDz[id]
-					clash = True
-				else:
-					print
-			
-			if clash:
-				global localClasses
-				global onlineClasses
-				localClasses = None
-				onlineClasses = None
-				raise Exception("\n\nClash of templates in slum initialization. Fix it!")
-					
-		print 'slum: local caching...'
-		localClasses = self.local()
-		printClasses(localClasses)
-		print 'slum: online caching'
-		onlineClasses = self.online()
-		printClasses(onlineClasses )
-		print 'slum: all done.'
-		return ( localClasses, onlineClasses )
+        def _refresh(self):
+                global localClasses
+                global onlineClasses
+                def printClasses(classes):
+                        idz = []
+                        countIDz = {}
+                        for classe in classes.keys():
+                                id = classes[classe]['ID']
+                                idz.append('slum:	found ID %4d Class %s' % ( id,classe))
+                                if not countIDz.has_key(id):
+                                        countIDz[id] = []
+                                countIDz[id].append(classe)
+                                
+                        idz.sort()
+                        clash = None
+                        for each in idz:
+                                id = int( each.split('ID ')[1].split(' C')[0] )
+                                print each, 
+                                if len(countIDz[id])>1:
+                                        print "%s> ERROR: ID Clashing -" % ("="*(50-len(each))),countIDz[id]
+                                        clash = True
+                                else:
+                                        print
+                        
+                        if clash:
+                                global localClasses
+                                global onlineClasses
+                                localClasses = None
+                                onlineClasses = None
+                                raise Exception("\n\nClash of templates in slum initialization. Fix it!")
+                                        
+                print 'slum: local caching...'
+                localClasses = self.local()
+                printClasses(localClasses)
+                print 'slum: online caching'
+                onlineClasses = self.online()
+                printClasses(onlineClasses )
+                print 'slum: all done.'
+                return ( localClasses, onlineClasses )
 
-	def _registerSlumFile(self, slumCode, path):
-		'''
-			based on a string with slum code on it, registers all class names in it into a temp db
-			for each name, it adds a "code" key with the source code, so later a client
-			can execute it and retrieve the class object at runtime.
+        def _registerSlumFile(self, slumCode, path):
+                '''
+                        based on a string with slum code on it, registers all class names in it into a temp db
+                        for each name, it adds a "code" key with the source code, so later a client
+                        can execute it and retrieve the class object at runtime.
 
-			this class is a support class for local and online methods!
-		'''
-
-
-		# keep dir() to compare with new dir() after
-		# code execution to find the new classes
-		# defined inside slum file
-
-		# execute code
-		env = {}
-		registry = None
-		newClasses = None
-		exec 'from slum import *' in env
-		registry = env.copy()
-		exec '\n'.join(slumCode) in env
-		newClasses = env
-		#print filter(lambda x: x not in registry.keys(), newClasses.keys()), env
-
-		# compare current dir() with old one and get the new ones
-		# loop trough all defined classes inside the current slum file
-		# and register then in a dict, if no other with the same name is already registered.
-		slumClasses={}
-		idz = []
-		for classe in filter(lambda x: x not in registry, newClasses):
-			#print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
-			if not slumClasses.has_key(classe):
-				slumClasses[classe] = {}
-				slumClasses[classe]['code'] = ''.join(slumCode)
-				# we also store the class name so it can be retrieve later in the client,
-				# even if the data is stored in a diferent format than a dict.
-				slumClasses[classe]['name'] = classe
-				slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
-				slumClasses[classe]['path'] = path
-
-				# execute code to catch potential runtime errors so clients don't have to
-				if not _test(slumClasses[classe]):
-					del slumClasses[classe]
-				
-				slumClasses[classe]['ID'] = evalSlumClass(slumClasses[classe]['code'], classe).ID()
-
-		return slumClasses
+                        this class is a support class for local and online methods!
+                '''
 
 
-	def online(self):
-		'''
-			same as local, but for online repositories.
-			returns data in the same format as local
-		'''
-		return {}
+                # keep dir() to compare with new dir() after
+                # code execution to find the new classes
+                # defined inside slum file
 
-	def readSlumFile(self, path):
-		return self._registerSlumFile( _readSlumFile(path), path )
+                # execute code
+                env = {}
+                registry = None
+                newClasses = None
+                exec 'from slum import *' in env
+                registry = env.copy()
+                exec '\n'.join(slumCode) in env
+                newClasses = env
+                #print filter(lambda x: x not in registry.keys(), newClasses.keys()), env
 
-	def local(self):
-		'''
-			returns a dictionary with all classes found in the searchpath
-			the dictionary is organized as:
+                # compare current dir() with old one and get the new ones
+                # loop trough all defined classes inside the current slum file
+                # and register then in a dict, if no other with the same name is already registered.
+                slumClasses={}
+                idz = []
+                for classe in filter(lambda x: x not in registry, newClasses):
+                        #print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
+                        if not slumClasses.has_key(classe):
+                                slumClasses[classe] = {}
+                                slumClasses[classe]['code'] = ''.join(slumCode)
+                                # we also store the class name so it can be retrieve later in the client,
+                                # even if the data is stored in a diferent format than a dict.
+                                slumClasses[classe]['name'] = classe
+                                slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
+                                slumClasses[classe]['path'] = path
+                                slumClasses[classe]['ID'] 	= evalSlumClass(slumClasses[classe]['code'], classe).ID()
 
-				{ 'class name' :
-					{'code' : 'code for the class'}
-				}
-		'''
-		# loop trough searchpath an look for all *.slum files
-		slumClasses={}
-		for searchPath in self.searchPath:
-			if os.environ.has_key(searchPath):
-				env = os.environ[searchPath]
-				for path in env.split(os.path.pathsep):
-					for each in glob.glob( os.path.join( path, '*.slum' ) ):
-						slumClasses.update( self.readSlumFile(each) )
-						
+                                # execute code to catch potential runtime errors so clients don't have to
+                                if not _test(slumClasses[classe]):
+                                        del slumClasses[classe]
+                                
 
-		return slumClasses
+                return slumClasses
+
+
+        def online(self):
+                '''
+                        same as local, but for online repositories.
+                        returns data in the same format as local
+                '''
+                return {}
+
+        def readSlumFile(self, path):
+                return self._registerSlumFile( _readSlumFile(path), path )
+
+        def local(self):
+                '''
+                        returns a dictionary with all classes found in the searchpath
+                        the dictionary is organized as:
+
+                                { 'class name' :
+                                        {'code' : 'code for the class'}
+                                }
+                '''
+                # loop trough searchpath an look for all *.slum files
+                slumClasses={}
+                for searchPath in self.searchPath:
+                        if os.environ.has_key(searchPath):
+                                env = os.environ[searchPath]
+                                for path in env.split(os.path.pathsep):
+                                        for each in glob.glob( os.path.join( path, '*.slum' ) ):
+                                                slumClasses.update( self.readSlumFile(each) )
+                                                
+
+                return slumClasses
