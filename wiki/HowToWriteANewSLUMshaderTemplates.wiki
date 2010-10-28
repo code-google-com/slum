@@ -1,4 +1,4 @@
-#Writing SLUM shader templates
+
 
 = Introduction =
 
@@ -22,7 +22,7 @@ An slum shader template has a few simple rules:
 * shader classes implement renderer specific shader code by creating methods named as the renderer, for example, delight() method is used for 3delight, cgfx() method is used for cgfx GPU render, renderman() is used for renderman, air() for air renderer, etc.
 * if a shader is used with a unsupported renderer (the shader class doesnt have the renderer method), slum will render with a standard shader.
 
-a shader example:
+== a simple diffuse shader example: ==
 
 {{{
 #
