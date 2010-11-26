@@ -164,9 +164,33 @@ class classNode(dict):
     def __delitem__(self, key):
             m.deleteAttr(self.attr(key))
 
+    def listConnections(self, key, asSource=False, asDest=False):
+        res = m.listConnections( self.attr(key), plugs=1, s=not asSource, d=not asDest )
+        if not res:
+            res = []
+        return res
+    
+    def disconnect(self, key, nodeAttr):
+        if nodeAttr in self.listConnections( key, asSource=True ):
+            m.disconnectAttr( self.attr(key), nodeAttr )
+        if nodeAttr in self.listConnections( key, asDest=True ):            
+            m.disconnectAttr( nodeAttr, self.attr(key) )
 
+    def disconnectAll(self, key):
+        for each in self.listConnections( key, asSource=True ):
+            m.disconnectAttr( self.attr(key), each )
+        for each in self.listConnections( key, asDest=True ):
+            m.disconnectAttr( each, self.attr(key) )
 
-
+    def connect(self, key, nodeAttr, asSource=False, asDest=False):
+        if type(nodeAttr)!=type([]):
+            nodeAttr = [nodeAttr]
+        for each in nodeAttr:
+                if asSource:
+                    m.connectAttr( self.attr(key), each, f=1 )
+                if asDest:
+                    m.connectAttr( each, self.attr(key), f=1 )
+                    
     def MObject(self):
             list = OpenMaya.MSelectionList()
             list.add( self.node )

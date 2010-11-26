@@ -21,13 +21,14 @@
 # ---------------------------------------------------------------------------
 
 class parameter:
-	def __init__(self, value, name, help='No Help available', max=1, min=0, output=False, ui=None, callback=None, hidden=False):
-		self.name	 	= name
-		self.help	 	= help
-		self.max	 	= max
-		self.min	 	= min
-		self.ui 		= ui
-		self.output		= output
+	def __init__(self, value, name, help='No Help available', max=1, min=0, output=False, input=False, ui=None, callback=None, hidden=False):
+		self.name	= name
+		self.help	= help
+		self.max	= max
+		self.min	= min
+		self.ui 	= ui
+		self.output	= output
+		self.input	= input
 		self.value  	= value
 		self.callback 	= callback
 		self.hidden 	= hidden

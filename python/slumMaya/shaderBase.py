@@ -274,7 +274,7 @@ class AETemplate:
                                     elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
                                             m.button( l = parameter.name, c = parameter.callback )
                                     elif parameter.__class__.__name__ == 'parameter':
-                                            if not parameter.output:
+                                            if not parameter.output and not parameter.input:
                                                     attribute = "%s.%s" % (slumNode.node, parameter.name)
                                                     help = textwrap.fill(parameter.help,100)
                                                     type = parameter.value.__class__.__name__
@@ -410,7 +410,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
 
 
                 def recursiveAddAttr( parameter ):
-                        pars={'input':[], 'output':[]}
+                        pars={'input':[], 'primvar':[], 'output':[]}
                         if parameter.__class__.__name__ == 'group':
                                 for each in parameter.value:
                                         tmp = recursiveAddAttr( each )
@@ -418,32 +418,45 @@ class shaderBase(OpenMayaMPx.MPxNode):
                                         pars['output'].extend( tmp['output'] )
                         elif parameter.__class__.__name__ == 'parameter':
                                 save = parameter.value
+                                asSource = []
+                                asDest = []
                                 if node.has_key(parameter.name):
-                                        if type(save)==type(node[parameter.name]):
-                                                #print type(save), type(node[parameter.name]), save, node[parameter.name]
-                                                save = node[parameter.name]
+                                    # save connections, if any
+                                    asSource = node.listConnections(parameter.name, asSource=True)
+                                    asDest   = node.listConnections(parameter.name, asDest=True)
+                                    if asSource+asDest:
+                                        node.disconnectAll(parameter.name)
+                                        
+                                    if type(save) == type(node[parameter.name]):
+                                        #print type(save), type(node[parameter.name]), save, node[parameter.name]
+                                        save = node[parameter.name]
+                                        
                                 node[parameter.name] = save
-                                try:
-                                    node.setInternal( parameter.name, True ) # add set/get callback
-                                    node.setReadable( parameter.name, True )
-                                    node.setStorable( parameter.name, True )
-                                except Exception, msg:
-                                    raise Exception( msg )
-                                if not parameter.output:
+                                node.setInternal( parameter.name, True ) # add set/get callback
+                                node.setReadable( parameter.name, True )
+                                node.setStorable( parameter.name, True )
+                                if parameter.output:
+                                        node.setWritable( parameter.name, False )
+                                        pars['output'].append(parameter.name)                                
+                                elif parameter.input:
+                                        node.setWritable( parameter.name, False )
+                                        pars['primvar'].append(parameter.name)
+                                else:
                                         node.setWritable( parameter.name, True )
                                         pars['input'].append(parameter.name)
-                                else:
-                                        node.setWritable( parameter.name, False )
-                                        pars['output'].append(parameter.name)
+                                        
+                                # restore values and connections
+                                if asSource+asDest and type(save) == type(node[parameter.name]):
+                                    node.connect( parameter.name, asSource, asSource=True )
+                                    node.connect( parameter.name, asDest, asDest=True )
+                                    
                         return pars
 
                 # use pars to set attributeAffects !!!!
                 try:
                     pars = recursiveAddAttr( node.slum.parameters() )
                 except Exception, msg:
-                    txt = [ "Error initializing nodetype %s" % self.typeName() ]
-                    for each in msg:
-                        txt.append( '\t%s' % each )
+                    txt = [ "Error initializing nodetype %s\n\n%s\n\n" % (self.typeName(), str(msg))]
                     raise Exception( '\n'.join(txt) )
 
 
