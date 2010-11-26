@@ -114,32 +114,32 @@ class color:
         
 
 class vector(color):
-	'''
-		slum datatype to hold vector data.
-		its derivated from color, overriding the internal to x,y,z.
-		also, theres 2 added method to manipulate vectors: lenght and normalize
-	'''
-	internal = ['x','y','z']
-	def length(self):
-		return math.sqrt(
-			(self.__dict__[self.internal[0]] * self.__dict__[self.internal[0]]) +
-			(self.__dict__[self.internal[1]] * self.__dict__[self.internal[1]]) +
-			(self.__dict__[self.internal[2]] * self.__dict__[self.internal[2]])
-		)
-	def normalize(self):
-		len = self.length()
-		return vector(
-			self.__dict__[self.internal[0]]/len,
-			self.__dict__[self.internal[1]]/len,
-			self.__dict__[self.internal[2]]/len
-		)
+    '''
+            slum datatype to hold vector data.
+            its derivated from color, overriding the internal to x,y,z.
+            also, theres 2 added method to manipulate vectors: lenght and normalize
+    '''
+    internal = ['x','y','z']
+    def length(self):
+        return math.sqrt(
+            (self.__dict__[self.internal[0]] * self.__dict__[self.internal[0]]) +
+            (self.__dict__[self.internal[1]] * self.__dict__[self.internal[1]]) +
+            (self.__dict__[self.internal[2]] * self.__dict__[self.internal[2]])
+        )
+    def normalize(self):
+        len = self.length()
+        return vector(
+            self.__dict__[self.internal[0]]/len,
+            self.__dict__[self.internal[1]]/len,
+            self.__dict__[self.internal[2]]/len
+        )
 
 class normal(vector):
-	'''
-		slum datatype to hold normal data.
-		its exactly like vector. Its defined just as a placeholder for people used to rsl. (like me :D)
-	'''
-	pass
+    '''
+            slum datatype to hold normal data.
+            its exactly like vector. Its defined just as a placeholder for people used to rsl. (like me :D)
+    '''
+    pass
 
 class point(vector):
     '''
