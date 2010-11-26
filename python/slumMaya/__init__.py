@@ -19,6 +19,8 @@
 # ---------------------------------------------------------------------------
 
 
+searchPath = ['SLUM_SEARCH_PATH', 'MAYA_SCRIPT_PATH', 'PYTHONPATH', '____DYNAMIC_SLUM_SEARCH_PATH']
+
 from nodeFactory import *
 from shaderBase import *
 from classNode import *
