@@ -19,10 +19,18 @@
 # ---------------------------------------------------------------------------
 
 
+import datatypes
+import uiWrappers as ui
+import shaderClasses
+import ribLibrary
+from collectClasses import collectSlumClasses, init, refresh, templates, getMD5, checkMD5, evalSlumClass
+
 from datatypes import *
-from collectClasses import *
 from uiWrappers import *
 from shaderClasses import *
 from ribLibrary import *
 
-init()
+
+#init()
+
+del uiWrappers, collectClasses

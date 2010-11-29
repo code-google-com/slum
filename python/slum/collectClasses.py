@@ -22,66 +22,58 @@
 # ---------------------------------------------------------------------------
 
 
-import os, glob, traceback, sys
+import os, glob, traceback, sys, copy
 import md5 as __md5
+from  safeEval import safe_eval
 
 
+from shaderClasses import *
 
-#shortcut methods
-def all():
-    '''
-        high level function
-        return all classes found on disk/online, that suscessfully passed the runtime/syntax error check.
-    '''
-    return collectSlumClasses().allClasses
+class __templates:
+    def __getitem__(self, key):
+        return eval( 'self.%s' % key )
 
+templates = __templates()
+
+# initialization methods
 def refresh():
     '''
             high level function
             force a refresh of all templates from disk/online
     '''
-    collectSlumClasses().refresh(force=True)
+    init(refresh=True)
 
-def init():
+def init(refresh=False):
     '''
         high level function
         loads all templates from disk/online
     '''
-    collectSlumClasses()
-
-def path(name):
-    '''
-        high level function
-        returns a updated path for a given template name.
-    '''
-    classes = collectSlumClasses().allClasses
-    return classes[name]['path']
-
-def md5(name):
-    '''
-        high level function
-        returns a updated path for a given template name.
-    '''
-    classes = collectSlumClasses().allClasses
-    return classes[name]['md5']
+    classes = collectSlumClasses()
+    if refresh:
+        classes.refresh(force=refresh)
+    allTemplates = classes.allClasses
+    cmd = []
+    for each in allTemplates.keys():
+        cmd.append( "templates.%s = __template('%s', allTemplates)" % (each, each) )
+    exec( ';'.join(cmd) )
 
 
-def template(name):
+# internal methods.
+def __template(name, classes=None):
     '''
         high level function
         returns a class obj for the givem template name.
         The returned object will be the class defined in the template, properly evaluated for runtime/syntax errors.
     '''
-    classes = collectSlumClasses().allClasses
+    if not classes:
+        classes = collectSlumClasses().allClasses
     if not _test(classes[name]):
         return None
     c = evalSlumClass(classes[name]['code'], name)
     c.name = name
     c.md5 = classes[name]['md5']
     c.path = classes[name]['path']
-    c.refresh = refresh()
     return c
-
 
 def _test(classe):
     '''
@@ -114,6 +106,7 @@ def _readSlumFile(path):
     return slumCode
 
 
+# a low level method to evaluate a new template from a code string
 def evalSlumClass(code, classeName):
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
@@ -123,26 +116,35 @@ def evalSlumClass(code, classeName):
     ret = ''
     newCode  = 'import traceback\n'
     newCode += 'from slum import *\n'
+    #newCode += 'from slum.shaderClasses import *\n'
+    #newCode += 'from slum.uiWrappers import *\n'
+    #newCode += 'from slum.datatypes import *\n'
     newCode += 'try:\n\t'
     newCode += code.replace('\n','\n\t')
     newCode += '\nexcept:\n'
     newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
+    newCode += 'temp = %s()\n' % classeName
     #print newCode
     #print 'bummmm', classeName
+    env = {}
     try:
-        exec newCode in globals()
+        exec newCode in env
     except:
-        tmp = ""
-        lineNumber = 1
-        for each in newCode.split('\n'):
-            tmp += "%4d: %s\n" % (lineNumber, each)
-            lineNumber  += 1
-        raise Exception("Error: %s\n\nOn slum template code: \n%s" % (traceback.format_exc(), tmp ) )
+        tmp = classeName
+#        lineNumber = 1
+#        for each in newCode.split('\n'):
+#            tmp += "%4d: %s\n" % (lineNumber, each)
+#            lineNumber  += 1
+        print  "Error in slum class '%s':\n%s\n%s%s\n" % (tmp, '='*80, traceback.format_exc(), '='*80)
     #print 'bummmm2'
-    ret = eval('%s()' % classeName)
-    #print 'bummmm3'
+    if env.has_key('temp'):
+        ret = copy.copy(env['temp'])
+
+        #ret = safe_eval('%s()' % classeName, fail_on_error = True)
+
     return ret
 
+# md5 help methods
 def getMD5(code):
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
@@ -150,13 +152,16 @@ def getMD5(code):
     '''
     return __md5.md5( code ).digest()
 
-def checkMD5(md5data, file):
+def checkMD5(md5data, name):
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
         check if the md5 matchs the md5 of the source file.
     '''
-    return md5data == getMD5( ''.join( _readSlumFile(file) ) )
+    classes = collectSlumClasses().allClasses
+    return md5data == getMD5( ''.join( _readSlumFile(classes[name]['path']) ) )
 
+
+# the class that looks for all templates
 class collectSlumClasses:
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
@@ -186,28 +191,24 @@ class collectSlumClasses:
             be accessed in diferent contexts. It also speeds up the whole proccess, avoiding multiple un-necessary
             disk/network accesses.
         '''
-        defaultSearchPath = 'SLUM_SEARCH_PATH'
-        defaultOnlineRepositorie = 'http://slum.hradec.com/repository'
 
-        global searchPathCache
-        global onlineRepositoriesCache
-        
-        try:
-            searchPathCache
-        except:
-            searchPathCache	= defaultSearchPath
-        
-        try:
-            onlineRepositoriesCache 
-        except:
-            onlineRepositoriesCache = defaultOnlineRepositorie
+        searchPathCache	= ['SLUM_SEARCH_PATH']
+        onlineRepositoriesCache = ['http://slum.hradec.com/repository']
+
+        if os.environ.has_key('___SLUM_GLOBAL_ONLINE_SEARCH_PATH'):
+            onlineRepositoriesCache = eval( os.environ['___SLUM_GLOBAL_ONLINE_SEARCH_PATH'] )
+
+        if os.environ.has_key('___SLUM_GLOBAL_SEARCH_PATH'):
+            searchPathCache = eval( os.environ['___SLUM_GLOBAL_SEARCH_PATH'] )
 
         # it paths specified, update caches
         if searchPath:
                 searchPathCache	= searchPath
+                os.environ['___SLUM_GLOBAL_SEARCH_PATH'] = str(searchPathCache)
 
         if onlineRepositories:
                 onlineRepositoriesCache = onlineRepositories
+                os.environ['___SLUM_GLOBAL_ONLINE_SEARCH_PATH'] = str(onlineRepositoriesCache)
 
         # store in the class for later use by methods
         self.searchPath         = searchPathCache
@@ -235,7 +236,7 @@ class collectSlumClasses:
         '''cache classes if global caches are empty or if forced to recache.'''
         global localClasses
         global onlineClasses
-        
+
         try: # check if variables are defined or not
             firstInit = False
             localClasses
@@ -244,7 +245,7 @@ class collectSlumClasses:
                     raise
         except:
             firstInit = True
-        
+
         localClasses, onlineClasses = self.__refresh(firstInit)
 
         # store then separeted for now...
@@ -259,11 +260,11 @@ class collectSlumClasses:
             ''' main refresh code, called from self.refresh()'''
             global localClasses
             global onlineClasses
-            
+
             def p(m):
                 if firstInit:
                     sys.stdout.write(m)
-                    
+
             def printClasses(classes):
                 idz = []
                 countIDz = {}
@@ -273,25 +274,25 @@ class collectSlumClasses:
                     if not countIDz.has_key(id):
                         countIDz[id] = []
                     countIDz[id].append(classe)
-                        
+
                 idz.sort()
                 clash = None
                 for each in idz:
                     id = int( each.split('ID ')[1].split(' C')[0] )
-                    p( each ) 
+                    p( each )
                     if len(countIDz[id])>1:
                         p( "%s> ERROR: ID Clashing - %s\n" % ( "="*(50-len(each)), str(countIDz[id]) ) )
                         clash = True
                     else:
                         p('\n')
-                
+
                 if clash:
                     global localClasses
                     global onlineClasses
                     localClasses = None
                     onlineClasses = None
                     raise Exception("\n\nClash of templates in slum initialization. Fix it!")
-                                    
+
             p( 'slum: local caching...\n' )
             localClasses = self.local()
             printClasses(localClasses)
@@ -320,6 +321,10 @@ class collectSlumClasses:
             registry = None
             newClasses = None
             exec 'from slum import *' in env
+            exec 'from slum.shaderClasses import *' in env
+            exec 'from slum.uiWrappers import *' in env
+            exec 'from slum.datatypes import *' in env
+
             registry = env.copy()
             exec '\n'.join(slumCode) in env
             newClasses = env
@@ -345,7 +350,7 @@ class collectSlumClasses:
                             # execute code to catch potential runtime errors so clients don't have to
                             if not _test(slumClasses[classe]):
                                     del slumClasses[classe]
-                            
+
 
             return slumClasses
 
@@ -377,6 +382,7 @@ class collectSlumClasses:
                             for path in env.split(os.path.pathsep):
                                     for each in glob.glob( os.path.join( path, '*.slum' ) ):
                                             slumClasses.update( self.readSlumFile(each) )
-                                            
+
 
             return slumClasses
+
