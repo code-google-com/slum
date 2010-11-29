@@ -20,7 +20,7 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
-import math
+
 
 class color:
     ''' slum datatype to hold color data.
@@ -29,6 +29,7 @@ class color:
     x,y,z.
     This datatype is defined to simplify a shader implementation, specially when defining slum
     shader parameters.'''
+    import math
 
     internal = ['r','g','b']
     def __init__(self, data=0, *args):
@@ -47,7 +48,7 @@ class color:
                 raise Exception('dataype requires 1 or %d parameters in initialization. Received only %d parameters.' % (len(self.internal),nargs+1))
     def checkKey(self, key):
         if key>len(self.internal) or key<0:
-            raise Exception('dataype values can only have 3 elements. Element %d not valid' % key )
+            raise Exception('datatype values can only have 3 elements. Element %d not valid' % key )
     def checkValue(self, value):
         if type(value) not in [int,long,float]:
             raise Exception('dataype "%s" not supported' % type(value))
@@ -62,7 +63,7 @@ class color:
         data = []
         for each in self.internal:
             data.append("%s" % str(self.__dict__[each]))
-        return '%s(%s)' % (self.__class__.__name__,','.join(data))
+        return '%s(%s)' % (str(self.__class__),','.join(data))
     def __len__(self):
         return 3
     def __delitem__(self, key):
@@ -159,7 +160,6 @@ class bound:
         return self.max - self.min
     def center(self):
         return self.min + ( self.size() ) * 0.5
-    
     
     
     

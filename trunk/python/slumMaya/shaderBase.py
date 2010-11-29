@@ -28,7 +28,7 @@ from maya.mel import eval as meval
 from nodeFactory import *
 import slumMaya
 import slum
-import os, md5, textwrap, sys
+import os, md5, textwrap, sys, traceback
 
 global AETemplateCache
 AETemplate={}
@@ -274,7 +274,7 @@ class AETemplate:
                                     elif parameter.__class__.__name__ == 'button' or parameter.ui.__class__.__name__ == 'button':
                                             m.button( l = parameter.name, c = parameter.callback )
                                     elif parameter.__class__.__name__ == 'parameter':
-                                            if not parameter.output and not parameter.input:
+                                            if not parameter.output and not parameter.primvar:
                                                     attribute = "%s.%s" % (slumNode.node, parameter.name)
                                                     help = textwrap.fill(parameter.help,100)
                                                     type = parameter.value.__class__.__name__
@@ -383,9 +383,8 @@ class shaderBase(OpenMayaMPx.MPxNode):
                     Also, this same method can be called to update the node if the class code changes.
             '''
             global ____nodeFactory
-            
+
             self = OpenMaya.MFnDependencyNode(object)
-            node = slumMaya.slumNode(self.name(), forceSlumEval = refreshNodeOnly)
 
             # dinamically source AETemplate for this node
             AETemplate( self.typeName() )
@@ -394,77 +393,89 @@ class shaderBase(OpenMayaMPx.MPxNode):
             # evaluate the slumClass
             classCache = slum.collectSlumClasses( slumMaya.searchPath )
             nodeTypeName = self.typeName().replace('slum_','')
-            
+
             if not classCache.allClasses.has_key(nodeTypeName):
                 raise Exception( 'Error initializing slum nodetype %s: \n\tmissing class definition in slum.\n\tthis probably happened because the class was defined in a project slum folder.\n\n\n' % self.typeName())
             else:
-                if not refreshNodeOnly:
-                        # find slumclass name, get the data from classCache and store in the slum key of the node (string parameter)
-                        node['slum'] = classCache.allClasses[nodeTypeName]
-                else:
-                        path = classCache.allClasses[nodeTypeName]['path']
-                        node['slum'] = classCache.readSlumFile( path )[nodeTypeName]
+                # we use classNode here just to make easier to create the slum string attr.
+                node = slumMaya.classNode(self.name())
+                # find slumclass name, get the data from classCache and store in the slum key of the node (string parameter)
+                node['slum'] = classCache.allClasses[nodeTypeName]
+                if refreshNodeOnly:
+                    path = classCache.allClasses[nodeTypeName]['path']
+                    node['slum'] = classCache.readSlumFile( path )[nodeTypeName]
 
                 # re-initialize now that the slum key is in place
                 node = slumMaya.slumNode(self.name(), forceSlumEval = refreshNodeOnly)
 
+                def recursiveAddAttr( dictParameters ):
+                    pars={'input':[], 'primvar':[], 'output':[]}
+                    for parameterIndex in dictParameters.keys():
+                        parameter = dictParameters[ parameterIndex ]
+                        save = parameter.value
+                        asSource = []
+                        asDest = []
+                        if node.has_key(parameter.name):
+                            # save connections, if any
+                            asSource = node.listConnections(parameter.name, asSource=True)
+                            asDest   = node.listConnections(parameter.name, asDest=True)
+                            if asSource+asDest:
+                                node.disconnectAll(parameter.name)
 
-                def recursiveAddAttr( parameter ):
-                        pars={'input':[], 'primvar':[], 'output':[]}
-                        if parameter.__class__.__name__ == 'group':
-                                for each in parameter.value:
-                                        tmp = recursiveAddAttr( each )
-                                        pars['input'].extend( tmp['input'] )
-                                        pars['output'].extend( tmp['output'] )
-                        elif parameter.__class__.__name__ == 'parameter':
-                                save = parameter.value
-                                asSource = []
-                                asDest = []
-                                if node.has_key(parameter.name):
-                                    # save connections, if any
-                                    asSource = node.listConnections(parameter.name, asSource=True)
-                                    asDest   = node.listConnections(parameter.name, asDest=True)
-                                    if asSource+asDest:
-                                        node.disconnectAll(parameter.name)
-                                        
-                                    if type(save) == type(node[parameter.name]):
-                                        #print type(save), type(node[parameter.name]), save, node[parameter.name]
-                                        save = node[parameter.name]
-                                        
-                                node[parameter.name] = save
-                                node.setInternal( parameter.name, True ) # add set/get callback
+                            if type(save) == type(node[parameter.name]):
+                                #print type(save), type(node[parameter.name]), save, node[parameter.name]
+                                save = node[parameter.name]
+
+                        node[parameter.name] = save
+
+                        try:
+                            if parameter.value.__class__.__name__ != 'point':
                                 node.setReadable( parameter.name, True )
-                                node.setStorable( parameter.name, True )
-                                if parameter.output:
-                                        node.setWritable( parameter.name, False )
-                                        pars['output'].append(parameter.name)                                
-                                elif parameter.input:
-                                        node.setWritable( parameter.name, False )
-                                        pars['primvar'].append(parameter.name)
-                                else:
-                                        node.setWritable( parameter.name, True )
-                                        pars['input'].append(parameter.name)
-                                        
-                                # restore values and connections
-                                if asSource+asDest and type(save) == type(node[parameter.name]):
-                                    node.connect( parameter.name, asSource, asSource=True )
-                                    node.connect( parameter.name, asDest, asDest=True )
-                                    
-                        return pars
+                                node.setInternal( parameter.name, True ) # add set/get callback
+
+                                writable = True
+                                if parameter.output or parameter.primvar:
+                                    writable = False
+
+                                node.setStorable( parameter.name, writable )
+                                node.setWritable( parameter.name, writable )
+
+                            # restore values and connections
+                            if asSource+asDest and type(save) == type(node[parameter.name]):
+                                node.connect( parameter.name, asSource, asSource=True )
+                                node.connect( parameter.name, asDest, asDest=True )
+
+                        except:
+                            txt0 = "\n Parameter %s \n\n%s" % (parameter.name, traceback.format_exc())
+                            txt1 = "\n\nError initializing nodetype %s\n%s\n%s\n%s\n" % (self.typeName(), '='*80, txt0, '='*80)
+                            sys.stderr.write( txt1 )
+
+                    return pars
 
                 # use pars to set attributeAffects !!!!
-                try:
-                    pars = recursiveAddAttr( node.slum.parameters() )
-                except Exception, msg:
-                    txt = [ "Error initializing nodetype %s\n\n%s\n\n" % (self.typeName(), str(msg))]
-                    raise Exception( '\n'.join(txt) )
+                pars = recursiveAddAttr( node.slum.dictParameters )
+                '''
+                # remove unused parameters
+                allPars = pars['input'] + pars['output']
+                allPars.extend( [ 'slum' ] )
+                userNodePars = m.listAttr( node.node, userDefined=1 )
+                for each in userNodePars:
+                    # we check the parameterName[:-1] to account for
+                    # compound parameter names, like colors and vectors
+                    # which maya adds 3 extra sub-parameters for each,
+                    # adding R,G and B (or X,Y,Z for vectors)
+                    if each[:-1] not in allPars:
+                        #del node[each]
+                        print each
+                '''
+
 
 
                 # loop trough registered renderers and call slumInitializer method
                 # if the renderer object have it
                 for each in slumMaya.renderers:
-                        if hasattr(each,'slumInitializer'):
-                                each.slumInitializer(node)
+                    if hasattr(each,'slumInitializer'):
+                        each.slumInitializer(node)
 
     def setDependentsDirty ( self, plugBeingDirtied, affectedPlugs ):
             sys.stderr.write('...%s...\n' %  plugBeingDirtied.name() )
@@ -480,13 +491,13 @@ class shaderBase(OpenMayaMPx.MPxNode):
             '''
             # loop trough registered renderers and call setInternalValueInContext
             # method if the renderer object have it
-            for each in slumMaya.renderers:
-                    if hasattr(each,'setInternalValueInContext'):
-                            each.setInternalValueInContext(
-                                    plug.name().split('.')[1],
-                                    slumMaya.slumNode( self.name() ),
-                                    dataHandle
-                            )
+#            for each in slumMaya.renderers:
+#                    if hasattr(each,'setInternalValueInContext'):
+#                            each.setInternalValueInContext(
+#                                    plug.name().split('.')[1],
+#                                    slumMaya.slumNode( self.name() ),
+#                                    dataHandle
+#                            )
 
             return False
 
@@ -499,15 +510,16 @@ class shaderBase(OpenMayaMPx.MPxNode):
                     False is default!
             '''
             ret = False
-            node = slumMaya.slumNode( self.name() )
-            plugName = plug.name().split('.')[1]
 
             # loop trough registered renderers and call getInternalValueInContext
             # method if the renderer object have it
             for each in slumMaya.renderers:
-                    if hasattr(each,'getInternalValueInContext'):
-                            ret = ret or each.getInternalValueInContext(plugName, node, dataHandle)
-
+                if hasattr(each,'getInternalValueInContext'):
+                    try:
+                        ret = each.getInternalValueInContext(plug, dataHandle)
+                    except:
+                        raise Exception( 'Error on attr %s %s.getInternalValueInContext() method: \n%s\n%s%s'
+                            % (plug.name(), each.__class__.__name__, '='*80,  traceback.format_exc()) )
             return ret
 
     def renderSwatchImage ( self, image ):

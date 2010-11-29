@@ -32,6 +32,7 @@ from shaderLight import *
 from glob import glob
 import os,sys
 import slum
+from pprint import pprint
 
 userClassify = {
 	'surface' 	: 'shader/surface',
@@ -84,7 +85,7 @@ class nodeFactory:
         self.callbackIDs   = OpenMaya.MCallbackIdArray()
         self.callbackIDs2  = range(9999)
         self.callbackIDs2counter  = 0
-        
+
     def refresh(self):
         self.collectSlum.refresh()
         self.allClasses    = self.collectSlum.allClasses
@@ -95,19 +96,19 @@ class nodeFactory:
         '''
         # do a refresh to get the current available slum node types.
         xxx = OpenMayaUI.MHWShaderSwatchGenerator.initialize()
-        
+
         # get all shaders and light node types to check if the one we are adding is already registered.
         registeredShaderTypes = map( lambda x: str(x), m.listNodeTypes('shader'))
         registeredLightTypes = map( lambda x: str(x), m.listNodeTypes('light'))
-        
+
         # loop over self.allClasses which has all the slum node types
         for classe in self.allClasses.keys():
             nodeTypeName	   = 'slum_%s' % classe
-            
+
             # check if the nodetype has already being registered
             if nodeTypeName not in registeredShaderTypes and 'slumLight_%s' % classe not in registeredLightTypes:
                 slumShader = slum.evalSlumClass(self.allClasses[classe]['code'], classe)
-                
+
                 # lights
                 if slumShader.type() == 'light':
                     nodeTypeName           = 'slumLight_%s' % classe
@@ -115,12 +116,12 @@ class nodeFactory:
                     nodeCreator            = shaderLight.nodeCreator
                     nodeInitializer        = shaderLight.nodeInitializer
                     nodeInitializeCallback = shaderLight.slumInitializer
-                    swatchName             = ''                
+                    swatchName             = ''
                 else:
                     #try:
-                    #	nodeType 			= OpenMayaMPx.MPxNode.kHardwareShader
+                    #	nodeType 		= OpenMayaMPx.MPxNode.kHardwareShader
                     #except:
-                    #	nodeType 			= OpenMayaMPx.MPxNode.kHwShaderNode
+                    #	nodeType 		= OpenMayaMPx.MPxNode.kHwShaderNode
                     nodeType                = OpenMayaMPx.MPxNode.kHwShaderNode
                     nodeCreator             = shaderSurface.nodeCreator
                     nodeInitializer         = shaderSurface.nodeInitializer
@@ -159,9 +160,10 @@ class nodeFactory:
                     '%s%s' % (userClassify[ slumShader.type() ], swatchName)
                 )
                 self.callbackIDs2[self.callbackIDs2counter] = OpenMaya.MDGMessage.addNodeAddedCallback ( nodeInitializeCallback, nodeTypeName)
+                #pprint( dir(self.callbackIDs2[self.callbackIDs2counter]) )
                 self.callbackIDs.append(self.callbackIDs2[self.callbackIDs2counter])
                 self.callbackIDs2counter += 1
-        
+
     def unregister(self):
         registeredShaderTypes = m.listNodeTypes('shader')
         registeredLightTypes  = m.listNodeTypes('light')
@@ -170,10 +172,10 @@ class nodeFactory:
 
         for classe in self.allClasses.keys():
             if 'slum_%s' % classe in registeredShaderTypes or 'slumLight_%s' % classe in registeredLightTypes:
-                slumShader = slum.evalSlumClass(self.allClasses[classe]['code'], classe)                    
+                slumShader = slum.evalSlumClass(self.allClasses[classe]['code'], classe)
                 self.mplugin.deregisterNode( OpenMaya.MTypeId( self.PluginNodeId + slumShader.ID() ) )
 
         for each in range(self.callbackIDs.length()):
             removeCallback( self.callbackIDs[each] )
             self.callbackIDs.remove [each]
-        self.callbackIDs2counter = 0
+

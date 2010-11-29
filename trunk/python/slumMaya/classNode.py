@@ -27,7 +27,8 @@ import maya, os
 import maya.mel as meval
 import maya.cmds as m
 import maya.OpenMaya as OpenMaya
-from slum import * # color and vector datatypes
+from slum.datatypes import * # color and vector datatypes
+from slum import *
 
 class classNode(dict):
     '''
@@ -95,30 +96,34 @@ class classNode(dict):
     def getAttr(self, key):
         if not m.objExists( self.attr(key) ):
                 raise Exception( 'Attribute %s does not exist in node.' % self.attr(key) )
-        value = m.getAttr(self.attr(key))
-        ret = value
-        t = type(ret)
-        if t in [str, unicode]:
-                ret = str(value)
-                # check if its a python dict, list or tuple. if so, return our wrapper to trigger updates automatically
-                dataType = ret.split('/')[0]
-                if dataType in ['dict','list','tuple']:
-                        data = eval(ret.replace('%s/' % dataType,''))
-                        #print '\n\ntttttt:', data, '\n\n'
-                        ret = self._dict(self, key)
-                        ret.update(data, callingFromClassNode=True)
-                        #print '\n\ntttttt:', ret, '\n\n'
-        elif t in [list]:
-                if m.objExists( "%sX" % self.attr(key) ):
-                        ret = vector(value[0][0], value[0][1], value[0][2])
-                elif m.objExists( "%sPX" % self.attr(key) ):
-                        ret = point(value[0][0], value[0][1], value[0][2])
-                elif m.objExists( "%sNX" % self.attr(key) ):
-                        ret = normal(value[0][0], value[0][1], value[0][2])
-                elif m.objExists( "%sR" % self.attr(key) ):
-                        ret = color(value[0][0], value[0][1], value[0][2])
-                else:
-                        ret = [value[0][0], value[0][1], value[0][2]]
+        ret = None
+        try:
+            value = m.getAttr(self.attr(key))
+            ret = value
+            t = type(ret)
+            if t in [str, unicode]:
+                    ret = str(value)
+                    # check if its a python dict, list or tuple. if so, return our wrapper to trigger updates automatically
+                    dataType = ret.split('/')[0]
+                    if dataType in ['dict','list','tuple']:
+                            data = eval(ret.replace('%s/' % dataType,''))
+                            #print '\n\ntttttt:', data, '\n\n'
+                            ret = self._dict(self, key)
+                            ret.update(data, callingFromClassNode=True)
+                            #print '\n\ntttttt:', ret, '\n\n'
+            elif t in [list]:
+                    if m.objExists( "%sX" % self.attr(key) ):
+                            ret = vector(value[0][0], value[0][1], value[0][2])
+                    elif m.objExists( "%sPX" % self.attr(key) ):
+                            ret = point(value[0][0], value[0][1], value[0][2])
+                    elif m.objExists( "%sNX" % self.attr(key) ):
+                            ret = normal(value[0][0], value[0][1], value[0][2])
+                    elif m.objExists( "%sR" % self.attr(key) ):
+                            ret = color(value[0][0], value[0][1], value[0][2])
+                    else:
+                            ret = [value[0][0], value[0][1], value[0][2]]
+        except:
+            pass
         return ret
 
     def __setitem__(self, key, item):

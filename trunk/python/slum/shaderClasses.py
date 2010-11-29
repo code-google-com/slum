@@ -23,82 +23,84 @@
 
 
 class slum:
-	'''This is the base shader class. (not used directly to develop shaders)
-	This class have all the support methods that that a template needs.
-	Also have all the client support methods.
+    '''This is the base shader class. (not used directly to develop shaders)
+    This class have all the support methods that that a template needs.
+    Also have all the client support methods.
 
-	renderer code is define as a method, as in the following example:
+    renderer code is define as a method, as in the following example:
 
-		def delight(self, parameters):
-			return ('','')
+            def delight(self, parameters):
+                    return ('','')
 
-	The method must have the name of one of the renderers defined in
-	the _renderers method.
+    The method must have the name of one of the renderers defined in
+    the _renderers method.
 
-	The method will be called by the clients, which will pass
-	the "parameters" attribute to it.
+    The method will be called by the clients, which will pass
+    the "parameters" attribute to it.
 
-	The parameters attribute is a dictionary that contains all the
-	parameters returned by the parameters method, but already evaluated
-	by the client. This way the method can evaluate the parameters input
-	from the user to build up the shader parameters and code.
+    The parameters attribute is a dictionary that contains all the
+    parameters returned by the parameters method, but already evaluated
+    by the client. This way the method can evaluate the parameters input
+    from the user to build up the shader parameters and code.
 
-	The method should return a tupple, where [0] is the shader
-	parameters and [1] is the shader code.
-	'''
+    The method should return a tupple, where [0] is the shader
+    parameters and [1] is the shader code.
+    '''
 
-	@staticmethod
-	def ID(self):
-		''' slum shader template ID. This method MUST be overriden when developing a shader template. Every shader must have an unique ID. '''
-		return None
-	def parameters(self):
-		''' return parameters to be exposed in the client. This method MUST be overriden when developing a shader template. '''
-		pass
-	def icon(self):
-		''' return string with MPX icon. This can be overriden in the template to define a custom icon. '''
-		return ''
-	def type():
-		''' slum shader type. This method is overriden by other classes to define the slum class type '''
-		return None
-	def __init__(self):
-		''' placeholder. No use for this method yet '''
-		pass
-	def clientRefresh(self):
-		''' placeholder. Clients will override this at runtime to allow template to refresh client UI '''
-		pass
-	def upload(self):
-		''' upload template to online repository. It will be called by the client when the user wants to submit a template to the online repository.'''
-		pass
+    @staticmethod
+    def ID(self):
+            ''' slum shader template ID. This method MUST be overriden when developing a shader template. Every shader must have an unique ID. '''
+            return None
+    def parameters(self):
+            ''' return parameters to be exposed in the client. This method MUST be overriden when developing a shader template. '''
+            pass
+    def icon(self):
+            ''' return string with MPX icon. This can be overriden in the template to define a custom icon. '''
+            return ''
+    def type():
+            ''' slum shader type. This method is overriden by other classes to define the slum class type '''
+            return None
+    def __init__(self):
+            ''' creates a dictionario of the parameters found in parameters() method '''
+            self.dictParameters = self._dictParameters(value=False)
+            pass
+    def clientRefresh(self):
+            ''' placeholder. Clients will override this at runtime to allow template to refresh client UI '''
+            pass
+    def upload(self):
+            ''' upload template to online repository. It will be called by the client when the user wants to submit a template to the online repository.'''
+            pass
 
 
-	# support methods - theses methods are basically to support clients.
-	# they are not suposed to be replaced in a .slum file (not virtual)
-	def _renderers(self):
-		''' Returns supported renderers. This is used by clients so they can add support on UI for then.
-			Basically, the names here reflect the same names of the methods for each renderer.
-			so, if you add a new renderer, you must make sure to add the method with the same name for it.
-			also, the support for this new renderer need to be added in the clients.'''
-		return [
-			'delight',
-			'renderman',
-			'air',
-			'cgfx',
-			'glsl',
-		]
-	def _dictParameters(self, value=False):
-		def recursivePopulateDict( parameter ):
-			temp = {}
-			if parameter.__class__.__name__ == 'group':
-				for each in parameter.value:
-					temp.update( recursivePopulateDict( each ) )
-			elif parameter.__class__.__name__ == 'parameter':
-				if value:
-					temp[parameter.name] = parameter.value
-				else:
-					temp[parameter.name] = parameter
-			return temp
+    # support methods - theses methods are basically to support clients.
+    # they are not suposed to be replaced in a .slum file (not virtual)
+    def _renderers(self):
+            ''' Returns supported renderers. This is used by clients so they can add support on UI for then.
+                    Basically, the names here reflect the same names of the methods for each renderer.
+                    so, if you add a new renderer, you must make sure to add the method with the same name for it.
+                    also, the support for this new renderer need to be added in the clients.'''
+            return [
+                    'delight',
+                    'renderman',
+                    'air',
+                    'cgfx',
+                    'glsl',
+            ]
+    def _dictParameters(self, value=False):
+            def recursivePopulateDict( parameter ):
+                    temp = {}
+                    if parameter.__class__.__name__ == 'group':
+                            for each in parameter.value:
+                                    temp.update( recursivePopulateDict( each ) )
+                    elif parameter.__class__.__name__ == 'parameter':
+                            if value:
+                                    temp[parameter.name] = parameter.value
+                            else:
+                                    temp[parameter.name] = parameter
+                    return temp
 
-		return recursivePopulateDict( self.parameters() )
+            return recursivePopulateDict( self.parameters() )
+
 
 
 

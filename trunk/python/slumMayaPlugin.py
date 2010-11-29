@@ -35,37 +35,37 @@ global ____nodeFactory
 
 def initializePlugin(mobject):
     global ____nodeFactory
-    
+
     os.environ['____DYNAMIC_SLUM_SEARCH_PATH'] = "%sslum" % m.workspace(rd=1,q=1)
     ____nodeFactory = slumMaya.nodeFactory(
-        mobject, 
+        mobject,
         pluginName,
         PluginNodeId,
         slumMaya.searchPath
     )
     ____nodeFactory.register()
- 
+
     def initSlum():
         '''
             scriptjob this function everytime a file is open to warn the user
-            that the workspace is different from before and slum needs to 
+            that the workspace is different from before and slum needs to
             refresh its nodes to account for templates located in
             the project "slum" folder.
-            
-            It also checks if unknown nodes are missing slum templates, and 
-            if so figures the workspace they came from and asks if the user 
+
+            It also checks if unknown nodes are missing slum templates, and
+            if so figures the workspace they came from and asks if the user
             wants to switch to that workspace and refresh.
         '''
         global ____nodeFactory
         result = "No"
         sceneName = m.file(q=1,sn=1)
         msg=None
-        
+
         def dialog(msg):
             title='SLUM MAYA PLUGIN WARNING'
             result = m.confirmDialog( title=title, message='\n\n'+'\n'.join(msg), button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
             return result
-        
+
         # check if unknown nodes have a "slum" attribute. If so, check the template path and check
         # if its a project-specific template. if so, trigger a plugin refresh to the project
         # the template came from to solve the unknown node.
@@ -90,7 +90,7 @@ def initializePlugin(mobject):
                         m.workspace( project, o=1 )
                         break
 
-        
+
         # if no unknown node detected, check if workspace has changed from when the plugin was last loaded/refreshed
         if result != "Yes" and '%sslum' % m.workspace(rd=1,q=1) != os.environ['____DYNAMIC_SLUM_SEARCH_PATH']:
             if sceneName:
@@ -110,29 +110,28 @@ def initializePlugin(mobject):
             m.unloadPlugin( 'slumMayaPlugin.py' )
             os.environ['____DYNAMIC_SLUM_SEARCH_PATH'] = '%sslum' % m.workspace(rd=1,q=1)
             m.loadPlugin( 'slumMayaPlugin.py' )
-            def initSlumFinish():
+            def slumInitFinish():
                 if sceneName:
                     m.file( sceneName, f=1, o=1 )
                 print "Slum Maya Plugin refreshed templates suscessfully.",
-            m.scriptJob( idleEvent = initSlumFinish, runOnce=True )
-                
+            m.scriptJob( idleEvent = slumInitFinish, runOnce=True )
+
     m.scriptJob( e = ["PreFileNewOrOpened",initSlum] )
-        
+
     #slumMaya.customGLView.initialize(mplugin)
- 
+
 def uninitializePlugin(mobject):
     global ____nodeFactory
-    
+
     try:
         ____nodeFactory.unregister()
-        del ____nodeFactory
-    except: 
+    except:
         pass
 
-    # cleanup all slum scriptJobs, if any, in an idleEvent so if 
+    # cleanup all slum scriptJobs, if any, in an idleEvent so if
     # this has being called by one, it will only delete it after it has
     # finish.
-    jobsToKill = filter(lambda x: 'Slum' in x,  m.scriptJob( lj=1 ))
+    jobsToKill = filter(lambda x: 'initSlum' in x,  m.scriptJob( lj=1 ))
     def killJobs():
         for each in jobsToKill:
             m.scriptJob( kill = int(each.split(':')[0]) )
