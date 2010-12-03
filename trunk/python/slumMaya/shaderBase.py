@@ -154,12 +154,14 @@ class AETemplate:
 
             # begin first line
             # ----------------------------------------------------------------------------
+            '''
             m.rowLayout( numberOfColumns=1, columnWidth1=800,
                                     columnAttach1 = 'right',  columnOffset1=0)
             m.iconTextButton( style='iconOnly', w=800, h=40, align='left',
             #m.image( w=800,h=40, enable=True,
                              image = os.path.join(slumMaya.__path__[0],'images','slum4maya.xpm') )
             m.setParent('..')
+            '''
 
             m.rowLayout( numberOfColumns=4, adj=4, columnWidth4=(20, 20, 100,1),
                                     columnAttach4 = ('left','left','left','left'),  columnOffset4=(0,0,0,0))
@@ -192,6 +194,7 @@ class AETemplate:
             m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = help )
 
             # edit button
+            '''
             xpmEdit = [
                             os.path.join(slumMaya.__path__[0],'images','edit.xpm'),
                             os.path.join(slumMaya.__path__[0],'images','editSelected.xpm'),
@@ -201,7 +204,6 @@ class AETemplate:
                     m.select(cl=True)
                     m.select(slumNode.node)
             m.iconTextButton( style='iconOnly', w=20, h=20, image=xpmEdit[0],  selectionImage=xpmEdit[1], command=editCode, annotation = "Edit slum template code stored in this node. After editing, Update light will become yellow, signing it has being edit inside maya." )
-
 
             # add popmenu for the renderer
             menu = m.optionMenuGrp(label='preview', cw2 = (60,80))
@@ -219,17 +221,19 @@ class AETemplate:
             # we should check the selected renderer here. for now, default to the first one in the list
             m.optionMenuGrp( menu, e=True, value=previewRenderers[0] )
             menuOption = m.optionMenuGrp( menu, q=True, value=True )
+            '''
 
             m.setParent('..')
             # ----------------------------------------------------------------------------
             # end first line
 
 
+            '''
             # run swatchUI method of the current selected renderer
             rendererObject = slumMaya.renderers[slumMaya.renderers.index(eval('slumMaya.%s' % menuOption))]
             if hasattr(rendererObject,'swatchUI'):
                     rendererObject.swatchUI(slumNode)
-
+            '''
             m.setParent('..')
 
 
@@ -422,9 +426,19 @@ class shaderBase(OpenMayaMPx.MPxNode):
                             if asSource+asDest:
                                 node.disconnectAll(parameter.name)
 
-                            if type(save) == type(node[parameter.name]):
-                                #print type(save), type(node[parameter.name]), save, node[parameter.name]
-                                save = node[parameter.name]
+                            # if parameter value and node attr value are of the same type, try to save the node value!
+                            nodeValue = node[parameter.name]
+                            if save.__class__.__name__ == nodeValue.__class__.__name__:
+                                save = nodeValue
+                            else:
+                                # TEMP FIX: we need to delete the attribute to make sure color and vector/normal
+                                # attributes are handled properly.
+                                # TODO: need to fix classNode to properly delete/recreate in case a datatype
+                                # changes type!
+                                # BUG TO FIX: related to this, when a datatype changes from color to vector/normal
+                                # and a scene is reloaded (were the node attr is saved as color) maya crashes! need
+                                # to figure out and fix!!
+                                del node[parameter.name]
 
                         node[parameter.name] = save
 

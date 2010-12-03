@@ -21,7 +21,7 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ------------------------------------------------------------
 
-
+import sys
 from classNode import *
 import slum
 import maya.cmds as m
@@ -52,10 +52,22 @@ class slumNode(classNode):
                 if self.classe:
 
                         if not slumNodeCache.has_key(self.node) or forceSlumEval:
-                                slumNodeCache[self.node] = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+                            newObj = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+                            if newObj:
+                                slumNodeCache[self.node] = newObj
 
                         self.slum = slumNodeCache[self.node]
                         # check if file md5 matches the one stored in the node.
+
+        def __getitem__(self, key):
+            value = classNode.__getitem__(self, key)
+            if type(value) == type(""):
+               scene = os.path.basename( os.path.splitext( m.file(sn=1,q=1) )[0] )
+               project = m.workspace( rd=1,q=1 )
+               value = value.replace('<project>', project).replace('//','/')
+               value = value.replace('<scene>', scene).replace('//','/')
+            return value
+
 
 
         def updated(self):

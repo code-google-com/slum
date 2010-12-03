@@ -91,6 +91,11 @@ class ui:
         def __init__(self, hidden=False):
             uiBase.__init__(self, hidden)
             pass
+    class file( uiBase ):
+        def __init__(self, filetypes=[], defaultFolder=None, hidden=False):
+            uiBase.__init__(self, hidden)
+            self.filetypes = filetypes
+            self.defaultFolder = defaultFolder
     class button( uiBase ):
         def __init__(self,callback, name='', hidden=False):
             uiBase.__init__(self, hidden)

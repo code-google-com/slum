@@ -89,7 +89,7 @@ def _test(classe):
     try:
         tmp=c.delight(c._dictParameters(value=True))
     except:
-        print "Runtime error in %s delight method.\n%s" % (classe['path'], traceback.format_exc())
+        sys.stderr.write( "Runtime error in %s delight method.\n%s" % (classe['path'], traceback.format_exc()) )
         ret = False
     return ret
 
@@ -113,7 +113,7 @@ def evalSlumClass(code, classeName):
         execute "code" string, and returns the class object for "classeName"
     '''
 
-    ret = ''
+    ret = None
     newCode  = 'import traceback\n'
     newCode += 'from slum import *\n'
     #newCode += 'from slum.shaderClasses import *\n'
@@ -124,6 +124,7 @@ def evalSlumClass(code, classeName):
     newCode += '\nexcept:\n'
     newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
     newCode += 'temp = %s()\n' % classeName
+    newCode += 'temp._dictParameters(value=True)'
     #print newCode
     #print 'bummmm', classeName
     env = {}
@@ -135,7 +136,7 @@ def evalSlumClass(code, classeName):
 #        for each in newCode.split('\n'):
 #            tmp += "%4d: %s\n" % (lineNumber, each)
 #            lineNumber  += 1
-        print  "Error in slum class '%s':\n%s\n%s%s\n" % (tmp, '='*80, traceback.format_exc(), '='*80)
+        sys.stderr.write(  "Error in slum class '%s':\n%s\n%s%s\n" % (tmp, '='*80, traceback.format_exc(), '='*80) )
     #print 'bummmm2'
     if env.has_key('temp'):
         ret = copy.copy(env['temp'])
