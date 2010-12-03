@@ -1,0 +1,94 @@
+#
+#   bakery.slum - an SubSurface Scatering shader
+#
+#	Author: hradec - nov/2010
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+
+class bakery(slumSurface):
+    def ID(self):
+            return 6
+
+    def parameters(self):
+            return  group( [
+                parameter( color(0,1,0), 'colorPassThrough', help='as this node needs to be executed in order to bake, we need to hook it up \nat the end of the network, right before the shading group.\n\nConnect here the actual color output you \nwant to be passed on to the beauty pass.\n\nWARNING: THIS COLOR WONT BE BAKED TO ANY FILE!' ),
+                parameter( color(1), 'transparencyPassThrough', help='same as colorPassThrough, but for transparency.' ),
+                group( [
+                    parameter( float(1), 'enableBake', ui=ui.checkbox(), help='enable/disable the bake to files.' ),
+                    parameter( float(1), 'bakeType', ui=ui.popup({'2D - Bake file (ASCII)':0, '2D - Bake file (Binary)':1}), help='For now, only bakes 2D bake files as ASCII text or Binary (binary is smaller). PTC is on the way.' ),
+                    parameter( "<project>/data/delight2DBake", 'bakePrefix'),
+                    parameter( color(0), 'color_01' ),
+                    parameter( color(0), 'color_02' ),
+                    parameter( color(0), 'color_03' ),
+                    parameter( color(0), 'color_04' ),
+                    parameter( color(0), 'color_05' ),
+                    parameter( color(0), 'color_06' ),
+                    parameter( color(0), 'color_07' ),
+                    parameter( color(0), 'color_08' ),
+                    parameter( color(0), 'color_09' ),
+                    parameter( color(0), 'color_10' ),
+                    parameter( color(0), 'color_11' ),
+                    parameter( color(0), 'color_12' ),
+                    parameter( color(0), 'color_13' ),
+                    parameter( color(0), 'color_14' ),
+                    parameter( color(0), 'color_15' ),
+                ], 'Passes to Bake' ),
+
+                # required for 3delight surface shaders
+                parameter( color(1), 'outColor', output=True ),
+                parameter( color(0), 'outTransparency', output=True ),
+            ], 'Setup' )
+
+
+    def delight(self, node):
+            # shader code
+            code=[
+                'outColor = colorPassThrough; ',
+                'outTransparency = transparencyPassThrough;',
+                'extern float s,t;'
+            ]
+
+            bake_snippet = 'bake( "%s", s, t, %s);'
+
+            for n in range( 1, 16 ):
+                passName = 'color_%02d' % n
+                passFileName = passName
+
+                # if running in maya, we do have access to the slumNode class, which gives us access
+                # to a lot of maya functionality, like figure out what's connected to the attr, bake only
+                # what's connected and extract the fileName from the connected attr name!
+                if node.__class__.__name__ == 'slumNode':
+                    connectedToPass = node.listConnections( 'color_%02d' % n, asDest=True )
+                    if connectedToPass:
+                        # grab the filename from the connected attr name.
+                        passFileName = connectedToPass[0].replace('.','_')
+                    else:
+                        continue
+
+                passFile = '%s_%s.bake' % (node['bakePrefix'], passFileName )
+
+                # if binary bake, add "&binary" to tell 3delight to bake a binary bake file.
+                if node['bakeType'] == 1:
+                    passFile += '&binary'
+                code.append( bake_snippet % ( passFile, passName ) )
+
+            return ([], code)
+
+
+

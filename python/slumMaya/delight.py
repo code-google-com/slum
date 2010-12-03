@@ -114,8 +114,8 @@ class delight:
                             t = pars[each].value.__class__.__name__
                             if t in ['int', 'float']:
                                 line = '%s float %s = %s;' % ( line, each, str(value) )
-                            elif t == ['str']:
-                                line = '%s string %s = %s;' % ( line, each, value )
+                            elif t in ['str']:
+                                line = '%s string %s = "%s";' % ( line, each, value )
                             else:
                                 line = '%s %s %s = %s;' % ( line, t, each, str(value).replace('slum.datatypes.','') )
                             zcode.append(line)
