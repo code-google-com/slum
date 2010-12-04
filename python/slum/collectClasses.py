@@ -35,6 +35,14 @@ class __templates:
 
 templates = __templates()
 
+
+# error report method:
+def formatException( msg, code=None ):
+    tmp = traceback.format_exc()
+    return "SLUM ERROR: %s\n%s\n%s%s\n" % (msg, '='*80, tmp, '='*80)
+
+
+
 # initialization methods
 def refresh():
     '''
@@ -67,15 +75,16 @@ def __template(name, classes=None):
     '''
     if not classes:
         classes = collectSlumClasses().allClasses
-    if not _test(classes[name]):
-        return None
+
     c = evalSlumClass(classes[name]['code'], name)
+    if not testRendererMethod(c):
+        return None
     c.name = name
     c.md5 = classes[name]['md5']
     c.path = classes[name]['path']
     return c
 
-def _test(classe):
+def testRendererMethod(classObj=None):
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
         test methods in a template for runtime/syntax errors.
@@ -84,13 +93,15 @@ def _test(classe):
                         loop that tests all methods in the given class.
     '''
     ret = True
-    c = evalSlumClass(classe['code'], classe['name'])
-    #for each in c._renderers():
-    try:
-        tmp=c.delight(c._dictParameters(value=True))
-    except:
-        sys.stderr.write( "Runtime error in %s delight method.\n%s" % (classe['path'], traceback.format_exc()) )
-        ret = False
+    for each in ['delight']: #c._renderers():
+        g = globals().copy()
+        l = locals().copy()
+        try:
+            eval( 'classObj.%s(classObj.dictParametersWithValue)' % each, g, l )
+        except:
+            msg = formatException( "runtime error in %s.%s method:" % (classObj.__class__.__name__, each) )
+            sys.stderr.write( msg )
+            ret = False
     return ret
 
 
@@ -119,29 +130,24 @@ def evalSlumClass(code, classeName):
     #newCode += 'from slum.shaderClasses import *\n'
     #newCode += 'from slum.uiWrappers import *\n'
     #newCode += 'from slum.datatypes import *\n'
-    newCode += 'try:\n\t'
-    newCode += code.replace('\n','\n\t')
-    newCode += '\nexcept:\n'
-    newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
-    newCode += 'temp = %s()\n' % classeName
-    newCode += 'temp._dictParameters(value=True)'
+    #newCode += 'try:\n\t'
+    newCode += code #.replace('\n','\n\t')
+    #newCode += '\nexcept:\n'
+    #newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
+    newCode += '\ntemp = %s()\n' % classeName
     #print newCode
     #print 'bummmm', classeName
     env = {}
     try:
         exec newCode in env
     except:
-        tmp = classeName
-#        lineNumber = 1
-#        for each in newCode.split('\n'):
-#            tmp += "%4d: %s\n" % (lineNumber, each)
-#            lineNumber  += 1
-        sys.stderr.write(  "Error in slum class '%s':\n%s\n%s%s\n" % (tmp, '='*80, traceback.format_exc(), '='*80) )
-    #print 'bummmm2'
+        msg = formatException( 'syntax error slum class "%s":' % classeName )
+        sys.stderr.write( msg )
+
     if env.has_key('temp'):
         ret = copy.copy(env['temp'])
 
-        #ret = safe_eval('%s()' % classeName, fail_on_error = True)
+    #ret = safe_eval('%s()' % classeName, fail_on_error = True)
 
     return ret
 
@@ -318,7 +324,7 @@ class collectSlumClasses:
             # defined inside slum file
 
             # execute code
-            env = {}
+            env = globals().copy()
             registry = None
             newClasses = None
             exec 'from slum import *' in env
@@ -327,7 +333,12 @@ class collectSlumClasses:
             exec 'from slum.datatypes import *' in env
 
             registry = env.copy()
-            exec '\n'.join(slumCode) in env
+            try:
+                #exec '\n'.join(slumCode) in env
+                execfile( path, env )
+            except:
+                msg = formatException( "runtime error in %s file:" % path )
+                sys.stderr.write( msg )
             newClasses = env
             #print filter(lambda x: x not in registry.keys(), newClasses.keys()), env
 
@@ -337,21 +348,27 @@ class collectSlumClasses:
             slumClasses={}
             idz = []
             for classe in filter(lambda x: x not in registry, newClasses):
-                    #print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
-                    if not slumClasses.has_key(classe):
-                            slumClasses[classe] = {}
-                            slumClasses[classe]['code'] = ''.join(slumCode)
-                            # we also store the class name so it can be retrieve later in the client,
-                            # even if the data is stored in a diferent format than a dict.
-                            slumClasses[classe]['name'] = classe
-                            slumClasses[classe]['md5']  = getMD5( slumClasses[classe]['code'] )
-                            slumClasses[classe]['path'] = path
-                            slumClasses[classe]['ID'] 	= evalSlumClass(slumClasses[classe]['code'], classe).ID()
-
-                            # execute code to catch potential runtime errors so clients don't have to
-                            if not _test(slumClasses[classe]):
-                                    del slumClasses[classe]
-
+                #print 'slum:	found %s' % filter(lambda x: 'class %s' % classe in ' '.join(x.split()), slumCode)[0].strip().strip(':')
+                if not slumClasses.has_key(classe):
+                    if '_slum__dictParameters' in dir(newClasses[classe]):
+                        # code checking (exception handling) is handled in evalSlumClass.
+                        # if an error occurs, evalSlumClass will return None
+                        # error msg goes to sys.stderr
+                        code = ''.join(slumCode)
+                        slumClassObj = evalSlumClass(code, classe)
+                        if slumClassObj:
+                            # again, exception handling is done inside testRendererMethod
+                            # again, if error occurs, it returns False
+                            # again, error msg is written in sys.stderr
+                            if testRendererMethod(slumClassObj):
+                                slumClasses[classe] = {}
+                                slumClasses[classe]['code'] = code
+                                # we also store the class name so it can be retrieve later in the client,
+                                # even if the data is stored in a diferent format than a dict.
+                                slumClasses[classe]['name'] = classe
+                                slumClasses[classe]['md5']  = getMD5( code )
+                                slumClasses[classe]['path'] = path
+                                slumClasses[classe]['ID'] 	= slumClassObj.ID()
 
             return slumClasses
 

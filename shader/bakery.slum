@@ -21,33 +21,129 @@
 # ---------------------------------------------------------------------------
 
 
+import os
+
+
 class bakery(slumSurface):
+    '''
+        A slum template to bake 2D/3D data.
+        For now, only supports 3delight bake.
+
+        This template is a interesting example of how to use the template<->client
+        intercomunication mechanism to better integrate a template into a specific
+        client.
+
+        As an example, when in Maya, the template examines if the color_nn parameters
+        have node connections, and only bake the ones who have it. Also, uses the node.attr
+        as the bake filename (node_attr).
+    '''
     def ID(self):
             return 6
 
+    def getPassFile(self, pars, passNumber):
+        '''
+            * Returns the pass filename (as bakeprefix+passname).
+            * If in maya, it figures the pass name from the connections to the color_NN parameters
+              automatically (if blinn.outColor is connected, passname is blinn_outColor),
+              and only returns the ones that have connections, avoiding creating a bake file for
+              color_NN parameter that doesn't have data.
+            * If not in maya, it returns the passname as color_NN (NN being the zero padded passNumber (%02d in python)  )
+        '''
+
+        passFileName = 'color_%02d' % passNumber
+        attrName = passFileName
+        '''
+            # the self.getClientClass() returns an client specific option so the template can
+              be better integrated into it.
+            # In maya, it returns the slumNode class object to the shader template node. That way
+            # a template can query a lot of information to the node, like connected nodes, attached geo, etc.
+            # in our case here, we use it to figure what is connected to the color_nn parameters and
+              only return passnames to the ones who have something connected to then. It also uses the
+              connected node and parameter as the passname.
+        '''
+        clientClass = self.getClientClass()
+        if clientClass and  self.client == 'maya':
+                connectedToPass = clientClass.listConnections( 'color_%02d' % passNumber, asDest=True )
+                if connectedToPass:
+                    # grab the filename from the connected attr name.
+                    passFileName = connectedToPass[0].replace('.','_')
+                    attrName = connectedToPass[0].split('.')[-1]
+                else:
+                    return None
+        return [ '%s_%s.bake' % ( pars['bakePrefix'], passFileName ), attrName ]
+
+
+
     def parameters(self):
+            '''
+                defines template parameters.
+                Also define a custom buttom that handles convertion of 3delight bake files to TIF
+            '''
+            self.numberOfPasses = 16
+
+            def convertBakedMaps(*args):
+                '''
+                    convert bake files into tif maps
+                    it uses the same mechanism the code method does to figure
+                    what is the name and path of the bake files.
+
+                    this is called when the "Convert Baked Maps to Tiff" button parameter is pressed in a client.
+                '''
+                node = self.getClientClass()
+                if node and self.client=='maya':
+                    import maya.cmds as m
+                    print
+                    batch = []
+                    tiffList = []
+                    for each in range( 1,16 ):
+                        passFileName = self.getPassFile(node, each)
+                        if passFileName:
+                            passFileName = passFileName[0]
+                            tiffType = '-preview8'
+                            if node['convertionOutputFileType']:
+                                tiffType = '-preview8'
+                            batch.append( 'echo Converting "%s"' % ( passFileName ) )
+                            batch.append( 'tdlmake -progress -nomipmap %s 1 "%s" "%s"' % ( tiffType, passFileName, passFileName.replace('.bake','.tif') ) )
+                            #batch.append( 'i-display "%s"' % passFileName.replace('.bake','tif') )
+                            tiffList.append(passFileName.replace('.bake','.tif'))
+
+
+                    amount = 0
+                    log = []
+                    m.progressWindow( title=" "*500, progress=amount, status="0%", isInterruptable=True )
+                    for cmd in batch:
+                        m.progressWindow( edit=1, progress=amount, title="converting %s... %2.2f%%" % ( os.path.basename( cmd.split('"')[1] ), amount, ) );
+                        # Check if the dialog has been cancelled
+                        if m.progressWindow( query=1, isCancelled=1): break
+                        # Check if end condition has been reached
+                        if m.progressWindow( query=1, progress=1 ) >= 100: break
+
+                        log.append( ''.join( os.popen( cmd ).readlines() ) )
+
+                        amount += 100/len(batch)
+                    m.progressWindow( endProgress=1 )
+                    print '='*200
+                    print '\n'.join(log)
+                    print '='*200
+                    print 'TIFF file list:'
+                    print '\n'.join(tiffList)
+
+
+
             return  group( [
                 parameter( color(0,1,0), 'colorPassThrough', help='as this node needs to be executed in order to bake, we need to hook it up \nat the end of the network, right before the shading group.\n\nConnect here the actual color output you \nwant to be passed on to the beauty pass.\n\nWARNING: THIS COLOR WONT BE BAKED TO ANY FILE!' ),
                 parameter( color(1), 'transparencyPassThrough', help='same as colorPassThrough, but for transparency.' ),
                 group( [
+                    parameter( int(1), 'convertionOutputFileType', ui=ui.popup({'8 bit TIFF':0, 'float TIFF':1, }), help='select if the converted tiff files will be 8 bit or floating point.' ),
+                    ui.button(convertBakedMaps,'Convert Baked Maps to Tiff'),
+                ], 'Convertion Tool' ),
+                group( [
                     parameter( float(1), 'enableBake', ui=ui.checkbox(), help='enable/disable the bake to files.' ),
-                    parameter( float(1), 'bakeType', ui=ui.popup({'2D - Bake file (ASCII)':0, '2D - Bake file (Binary)':1}), help='For now, only bakes 2D bake files as ASCII text or Binary (binary is smaller). PTC is on the way.' ),
+                    parameter( float(0), 'bakeType', ui=ui.popup({'2D - Bake file (ASCII)':0, '2D - Bake file (Binary)':1}), help='For now, only bakes 2D bake files as ASCII text or Binary (binary is smaller). PTC is on the way.' ),
                     parameter( "<project>/data/delight2DBake", 'bakePrefix'),
-                    parameter( color(0), 'color_01' ),
-                    parameter( color(0), 'color_02' ),
-                    parameter( color(0), 'color_03' ),
-                    parameter( color(0), 'color_04' ),
-                    parameter( color(0), 'color_05' ),
-                    parameter( color(0), 'color_06' ),
-                    parameter( color(0), 'color_07' ),
-                    parameter( color(0), 'color_08' ),
-                    parameter( color(0), 'color_09' ),
-                    parameter( color(0), 'color_10' ),
-                    parameter( color(0), 'color_11' ),
-                    parameter( color(0), 'color_12' ),
-                    parameter( color(0), 'color_13' ),
-                    parameter( color(0), 'color_14' ),
-                    parameter( color(0), 'color_15' ),
+                    group( [
+                        parameter( color(0), 'color_%02d' % (x+1) ) for x in range(self.numberOfPasses)
+                    ], 'Input Passes', opened=False ),
                 ], 'Passes to Bake' ),
 
                 # required for 3delight surface shaders
@@ -57,36 +153,36 @@ class bakery(slumSurface):
 
 
     def delight(self, node):
-            # shader code
+            ''' code for 3delight '''
             code=[
                 'outColor = colorPassThrough; ',
                 'outTransparency = transparencyPassThrough;',
                 'extern float s,t;'
             ]
+            bake_snippet = '''
+                #ifdef rendermanCodeShaderParam_%s
+                    extern varying color %s;
+                    bake( "%s", s, t, %s);
+                #else
+                    bake( "%s", s, t, color_%02d);
+                #endif
+            '''
 
-            bake_snippet = 'bake( "%s", s, t, %s);'
-
+            # loop over all color_nn parameters
             for n in range( 1, 16 ):
-                passName = 'color_%02d' % n
-                passFileName = passName
 
-                # if running in maya, we do have access to the slumNode class, which gives us access
-                # to a lot of maya functionality, like figure out what's connected to the attr, bake only
-                # what's connected and extract the fileName from the connected attr name!
-                if node.__class__.__name__ == 'slumNode':
-                    connectedToPass = node.listConnections( 'color_%02d' % n, asDest=True )
-                    if connectedToPass:
-                        # grab the filename from the connected attr name.
-                        passFileName = connectedToPass[0].replace('.','_')
-                    else:
-                        continue
-
-                passFile = '%s_%s.bake' % (node['bakePrefix'], passFileName )
+                # calls getPassFile to figure the bake filenames.
+                # getPassFile handle client-specific filename definition as well.
+                passFile = self.getPassFile( node, n )
+                if not passFile:
+                    continue
 
                 # if binary bake, add "&binary" to tell 3delight to bake a binary bake file.
                 if node['bakeType'] == 1:
-                    passFile += '&binary'
-                code.append( bake_snippet % ( passFile, passName ) )
+                    passFile[0] += '&binary'
+
+
+                code.append( bake_snippet % ( passFile[1], passFile[1], passFile[0], passFile[1], passFile[0], n ) )
 
             return ([], code)
 
