@@ -188,8 +188,8 @@ class AETemplate:
                     m.iconTextButton( updateButtonName, e=True, image=xpm[1] )
                     shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
                     m.iconTextButton( updateButtonName, e=True, image=xpm[0] )
-                    m.select(cl=True)
-                    m.select(slumNode.node)
+                    #m.select(cl=True)
+                    #m.select(slumNode.node)
                     slumNode['slum']['edited'] = False
             m.iconTextButton( updateButtonName, style='iconOnly', w=20, h=20, image=xpm[0],  selectionImage=xpm[1], command=updateCode, annotation = help )
 
@@ -374,7 +374,7 @@ class shaderBase(OpenMayaMPx.MPxNode):
                     usually, this method would handle all the initialization of parameters for the node.
                     Instead, we initialize the node in another method that is called AFTER the node
                     already exists in maya.
-                    This make the whole process much simple, and if we need to update a node from a new version
+                    This make the whole process much simpler, and if we need to update a node from a new version
                     of a slum template, we just call the same method again.
             '''
             pass
@@ -491,50 +491,59 @@ class shaderBase(OpenMayaMPx.MPxNode):
                     if hasattr(each,'slumInitializer'):
                         each.slumInitializer(node)
 
+    def cacheSlumNode( self ):
+        if not hasattr( self, 'slumNode' ):
+            self.slumNode = slumMaya.slumNode(self.name())
+        return self.slumNode
+
     def setDependentsDirty ( self, plugBeingDirtied, affectedPlugs ):
-            sys.stderr.write('...%s...\n' %  plugBeingDirtied.name() )
-            #node = slumMaya.slumNode( self.name() )
-            return True
+        sys.stderr.write('...%s...\n' %  plugBeingDirtied.name() )
+        #node = slumMaya.slumNode( self.name() )
+        return True
 
     def setInternalValueInContext ( self, plug, dataHandle,  ctx ):
-            '''
-                    callback when user changes parameters in the node.
-                    Returning false forces maya to set the value of the attribute as it would whitout a callback.
-                    returning true means that this function set the value and maya dont need to do a thing.
-                    False is default!
-            '''
-            # loop trough registered renderers and call setInternalValueInContext
-            # method if the renderer object have it
-#            for each in slumMaya.renderers:
-#                    if hasattr(each,'setInternalValueInContext'):
-#                            each.setInternalValueInContext(
-#                                    plug.name().split('.')[1],
-#                                    slumMaya.slumNode( self.name() ),
-#                                    dataHandle
-#                            )
+        '''
+                callback when user changes parameters in the node.
+                Returning false forces maya to set the value of the attribute as it would whitout a callback.
+                returning true means that this function set the value and maya dont need to do a thing.
+                False is default!
+        '''
 
-            return False
+        #if not slumMaya.classNode(nodeName).has_key( attrName ):
+        #    return True
+
+        # loop trough registered renderers and call setInternalValueInContext
+        # method if the renderer object have it
+        #for each in slumMaya.renderers:
+        #    if hasattr(each,'setInternalValueInContext'):
+        #        each.setInternalValueInContext(
+        #            plug.name().split('.')[1],
+        #            slumMaya.slumNode( self.name() ),
+        #            dataHandle
+        #        )
+
+        return False
 
     def getInternalValueInContext ( self, plug, dataHandle,  ctx ):
-            '''
-                    callback when reading parameters from the node.
-                    returning false forces maya to get teh value of the attribute as it would whitout a callback.
-                    returning true forces maya to avoid getting the value itself, and will return whatever
-                    this method put inside dataHandle.
-                    False is default!
-            '''
-            ret = False
+        '''
+                callback when reading parameters from the node.
+                returning false forces maya to get teh value of the attribute as it would whitout a callback.
+                returning true forces maya to avoid getting the value itself, and will return whatever
+                this method put inside dataHandle.
+                False is default!
+        '''
+        ret = False
 
-            # loop trough registered renderers and call getInternalValueInContext
-            # method if the renderer object have it
-            for each in slumMaya.renderers:
-                if hasattr(each,'getInternalValueInContext'):
-                    try:
-                        ret = each.getInternalValueInContext(plug, dataHandle)
-                    except:
-                        raise Exception( 'Error on attr %s %s.getInternalValueInContext() method: \n%s\n%s%s'
-                            % (plug.name(), each.__class__.__name__, '='*80,  traceback.format_exc()) )
-            return ret
+        # loop trough registered renderers and call getInternalValueInContext
+        # method if the renderer object have it
+        for each in slumMaya.renderers:
+            if hasattr(each,'getInternalValueInContext'):
+                try:
+                    ret = each.getInternalValueInContext(plug, dataHandle)
+                except:
+                    raise Exception( 'Error on attr %s %s.getInternalValueInContext() method: \n%s\n%s%s'
+                        % (plug.name(), each.__class__.__name__, '='*80,  traceback.format_exc()) )
+        return ret
 
     def renderSwatchImage ( self, image ):
-            pass
+        pass

@@ -34,6 +34,7 @@ except:
     slumNodeCache={}
 
 
+
 class slumNode(classNode):
         '''
                 derivated from classNode, this class adds the advantage of evaluating an slum attribute automaticaly, if
@@ -42,22 +43,29 @@ class slumNode(classNode):
                 from the code in the string attribute.
         '''
         def __init__(self, node, data=None, forceSlumEval = False):
-                classNode.__init__(self, node, data)
-                self.classe = None
-                if classNode.has_key(self, 'slum'):
-                        self.classe = classNode.__getitem__(self,'slum')
-                        classNode._dict.__setitem__(self.classe, 'edited', False)
-                self.evalSlumClass( forceSlumEval )
+            classNode.__init__(self, node, data)
+            self.classe = None
+            if classNode.has_key(self, 'slum'):
+                    self.classe = classNode.__getitem__(self,'slum')
+                    classNode._dict.__setitem__(self.classe, 'edited', False)
+            self.evalSlumClass( forceSlumEval )
         def evalSlumClass(self, forceSlumEval = False):
-                if self.classe:
+            if self.classe:
+                if not slumNodeCache.has_key(self.node) or forceSlumEval:
+                    newObj = slum.evalSlumClass(self.classe['code'], self.classe['name'])
+                    if newObj:
+                        slumNodeCache[self.node] = newObj
 
-                        if not slumNodeCache.has_key(self.node) or forceSlumEval:
-                            newObj = slum.evalSlumClass(self.classe['code'], self.classe['name'])
-                            if newObj:
-                                slumNodeCache[self.node] = newObj
+                self.slum = slumNodeCache[self.node]
 
-                        self.slum = slumNodeCache[self.node]
-                        # check if file md5 matches the one stored in the node.
+                # assign a custom getClientClass method which will return this slumNode obj
+                # this allows the template to access client data for advanced interaction.
+                def getClientClass():
+                    return self
+                self.slum.getClientClass = getClientClass
+                self.slum.client = 'maya'
+
+                # check if file md5 matches the one stored in the node.
 
         def __getitem__(self, key):
             value = classNode.__getitem__(self, key)

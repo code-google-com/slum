@@ -20,7 +20,7 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
-
+import sys
 
 class slum:
     '''This is the base shader class. (not used directly to develop shaders)
@@ -61,12 +61,42 @@ class slum:
             ''' slum shader type. This method is overriden by other classes to define the slum class type '''
             return None
     def __init__(self):
-            ''' creates a dictionario of the parameters found in parameters() method '''
-            self.dictParameters = self._dictParameters(value=False)
-            pass
+            '''
+            # execute virtual self.parameters() here just once and cache in self.__pars.
+            # replaces self.parameters() by a simple function which returns self.__pars.
+              this way we only execute parameters ONCE everytime the class obj is initialized.
+            # creates a plain dictionary of the parameters found in self.parameters() method
+              for easy access by clients.
+            '''
+            self.client = 'python'
+
+            # execute virtual self.parameters() here just once and cache it
+            # also replaces self.parameters() by a simple function which returns the cache.
+            self.__pars = {}
+            try:
+                self.__pars = self.parameters()
+            except:
+                raise Exception( "Runtime error in %s.parameters() method:\n%s\n%s%s\n" % (tmp, '='*80, traceback.format_exc(), '='*80) )
+
+            # replace self.parameters by this simple method who returns the cached output of parameters
+            # this way we only execute parameters ONCE everytime the class obj is initialized.
+            self.originalParameters = self.parameters
+            def __cachedParameters():
+                return self.__pars
+            #self.parameters = __cachedParameters
+
+            # creates a plain dictionary of the parameters found in self.parameters() method
+            # for easy access by clients.
+            self.dictParameters = self.__dictParameters(value=False)
+            self.dictParametersWithValue = self.__dictParameters(value=True)
+
+
     def clientRefresh(self):
             ''' placeholder. Clients will override this at runtime to allow template to refresh client UI '''
             pass
+    def getClientClass(self):
+            ''' returns a client '''
+            return None
     def upload(self):
             ''' upload template to online repository. It will be called by the client when the user wants to submit a template to the online repository.'''
             pass
@@ -86,7 +116,7 @@ class slum:
                     'cgfx',
                     'glsl',
             ]
-    def _dictParameters(self, value=False):
+    def __dictParameters(self, value=False):
             def recursivePopulateDict( parameter ):
                     temp = {}
                     if parameter.__class__.__name__ == 'group':
