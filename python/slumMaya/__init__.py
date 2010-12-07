@@ -29,3 +29,24 @@ from slumNode import *
 
 renderers=[]
 from delight import *
+
+def updateCode( nodeName = None ):
+    '''
+        Update the code in all slum node shaders in the current maya scene.
+        It first checks if a node needs to be updated and only does
+        for the ones who need!
+    '''
+    import slumMaya, os
+    import maya.cmds as m
+    if not nodeName:
+        nodeName = filter(lambda x: 'slum' in x.lower(), m.listNodeTypes('shader'))
+    if type(nodeName) != type([]):
+        nodeName = [nodeName]
+    for each in nodeName:
+        for n in m.ls(type=each):
+            slumNode = slumMaya.slumMaya.slumNode(n)
+            if not slumNode.updated():
+                print 'code updated in node: %s' % n
+                slumMaya.shaderBase.slumInitializer( slumNode.MObject(), refreshNodeOnly=True )
+                slumNode['slum']['edited'] = False
+
