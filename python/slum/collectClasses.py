@@ -159,13 +159,23 @@ def getMD5(code):
     '''
     return __md5.md5( code ).digest()
 
-def checkMD5(md5data, name):
+def checkMD5(checkSumData, name):
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
         check if the md5 matchs the md5 of the source file.
+        as optimization, it first checks the time of the source file against the time stored in the slum template.
     '''
     classes = collectSlumClasses().allClasses
-    return md5data == getMD5( ''.join( _readSlumFile(classes[name]['path']) ) )
+    try:
+        md5data, st_mtime = checkSumData.split('_')
+    except:
+        return False
+    st_mtime = float(st_mtime)
+
+    ret = True
+    if os.stat(classes[name]['path']).st_mtime > st_mtime:
+        ret = md5data == getMD5( ''.join( _readSlumFile(classes[name]['path']) ) )
+    return ret
 
 
 # the class that looks for all templates
@@ -366,9 +376,9 @@ class collectSlumClasses:
                                 # we also store the class name so it can be retrieve later in the client,
                                 # even if the data is stored in a diferent format than a dict.
                                 slumClasses[classe]['name'] = classe
-                                slumClasses[classe]['md5']  = getMD5( code )
+                                slumClasses[classe]['md5']  = '%s_%s' % ( getMD5( code ), os.stat(path).st_mtime )
                                 slumClasses[classe]['path'] = path
-                                slumClasses[classe]['ID'] 	= slumClassObj.ID()
+                                slumClasses[classe]['ID']   = slumClassObj.ID()
 
             return slumClasses
 
