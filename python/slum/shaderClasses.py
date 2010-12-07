@@ -20,7 +20,7 @@
 #    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
 # ---------------------------------------------------------------------------
 
-import sys
+import sys, traceback
 
 class slum:
     '''This is the base shader class. (not used directly to develop shaders)
@@ -69,6 +69,7 @@ class slum:
               for easy access by clients.
             '''
             self.client = 'python'
+            self.platform = sys.platform
 
             # execute virtual self.parameters() here just once and cache it
             # also replaces self.parameters() by a simple function which returns the cache.
@@ -76,6 +77,7 @@ class slum:
             try:
                 self.__pars = self.parameters()
             except:
+                tmp = self.__class__.__name__
                 raise Exception( "Runtime error in %s.parameters() method:\n%s\n%s%s\n" % (tmp, '='*80, traceback.format_exc(), '='*80) )
 
             # replace self.parameters by this simple method who returns the cached output of parameters
