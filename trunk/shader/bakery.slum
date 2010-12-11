@@ -22,25 +22,26 @@
 
 
 import os
+from sys import platform
 
 
 class bakery(slumSurface):
     '''
         A slum template to bake 2D/3D data.
-        For now, only supports 3delight bake.
+        For now, only supports 3delight 2D bake.
 
         This template is a interesting example of how to use the template<->client
         intercomunication mechanism to better integrate a template into a specific
         client.
 
         As an example, when in Maya, the template examines if the color_nn parameters
-        have node connections, and only bake the ones who have it. Also, uses the node.attr
+        have connections, and only bake the ones who have it. Also, uses the node.attr
         as the bake filename (node_attr).
     '''
     def ID(self):
             return 6
 
-    def getPassFile(self, pars, passNumber):
+    def getPassFile(self, pars, attrName):
         '''
             * Returns the pass filename (as bakeprefix+passname).
             * If in maya, it figures the pass name from the connections to the color_NN parameters
@@ -48,9 +49,10 @@ class bakery(slumSurface):
               and only returns the ones that have connections, avoiding creating a bake file for
               color_NN parameter that doesn't have data.
             * If not in maya, it returns the passname as color_NN (NN being the zero padded passNumber (%02d in python)  )
+            * The template parameter has a button parameter which triggers a convertion of baked maps to tiff, using 3delight tdlmake.
         '''
 
-        passFileName = 'color_%02d' % passNumber
+        passFileName = attrName
         attrName = passFileName
         '''
             # the self.getClientClass() returns an client specific option so the template can
@@ -63,7 +65,7 @@ class bakery(slumSurface):
         '''
         clientClass = self.getClientClass()
         if clientClass and  self.client == 'maya':
-                connectedToPass = clientClass.listConnections( 'color_%02d' % passNumber, asDest=True )
+                connectedToPass = clientClass.listConnections( attrName, asDest=True )
                 if connectedToPass:
                     # grab the filename from the connected attr name.
                     passFileName = connectedToPass[0].replace('.','_')
@@ -73,78 +75,177 @@ class bakery(slumSurface):
         return [ '%s_%s.bake' % ( pars['bakePrefix'], passFileName ), attrName ]
 
 
+    def passesNames(self):
+        ''' used by parameters to create the input passes parameters and all other code that references then. (delight, maps convertion, etc. '''
+        self.numberOfPasses = 16
+        return [ 'color_%02d%s' % (x+1,y) for x in range(20) for y in ['','_alpha'] ]
+
+    def convertBakedMaps(self):
+        '''
+            convert bake files into tif maps
+            it uses the same mechanism the code method does to figure
+            what is the name and path of the bake files.
+
+            this is called when the "Convert Baked Maps to Tiff" button parameter is pressed in a client.
+        '''
+        node = self.getClientClass()
+        if node and self.client=='maya':
+            rm = 'rm'
+            slash = '/'
+            if 'win' in platform[:3]:
+                rm = 'del /S /Q /F'
+                slash = '\\'
+            bit8 = True
+            tiffType = '-ubyte -preview8'
+            if node['convertionOutputRGB_depth']==1 and node['convertionOutputFileType']==0:
+                tiffType = '-preview'
+                bit8 = False
+            import maya.cmds as m
+            print
+            batch = []
+            tiffList = []
+            converted = {}
+            for passName in self.passesNames():
+                passFileName = self.getPassFile( node, passName )
+                if passFileName:
+                    passFileName = passFileName[0]
+                    max = node['convertionOutputWidth']
+                    if node['convertionOutputHeight'] > max:
+                        max = node['convertionOutputHeight']
+                    batch.append( 'tdlmake -bakeres %d -nomipmap %s 1 "%s" "%s" 2>&1' % ( max, tiffType, passFileName, passFileName.replace('.bake','.tif') ) )
+
+                    rgba = 'rgb'
+                    rgbPassName = passName
+                    if '_alpha' in passName:
+                        rgbPassName = passName.split('_alpha')[0]
+                        rgba = 'a'
+
+                    if not converted.has_key( rgbPassName ):
+                        converted[ rgbPassName ] = {}
+
+                    converted[ rgbPassName ][ rgba ] = passFileName.replace('.bake','.tif')
+                    tiffList.append( passFileName.replace('.bake','.tif') )
+
+            # combine alpha with rgb, if converted tifs were 8bit
+            if bit8:
+                for p in converted:
+                    tga = converted[p]['rgb'].replace('.tif','.tga')
+                    batch.append( 'imconvert %s  -resize %dx%d -sharpen 0x1 %s' % ( converted[p]['rgb'], node['convertionOutputWidth'], node['convertionOutputHeight'], converted[p]['rgb'] ) )
+                    if len(converted[p])>1:
+                        batch.append( 'imconvert %s  -resize %dx%d -sharpen 0x1 %s' % ( converted[p]['a'], node['convertionOutputWidth'], node['convertionOutputHeight'], converted[p]['a'] ) )
+                        batch.append( 'imconvert %s %s -compose Copy_Opacity -composite %s' %
+                            ( converted[p]['rgb'], converted[p]['a'], converted[p]['rgb'] ) )
+                        batch.append( '%s "%s" 2>&1' % (rm, converted[p]['a'].replace('/',slash)) )
+                        del tiffList[ tiffList.index( converted[p]['a'] ) ]
+                    batch.append( 'imconvert %s  -depth 8 %s' % ( converted[p]['rgb'], tga ) )
+                    batch.append( '%s "%s" 2>&1' % (rm, converted[p]['rgb'].replace('/',slash)) )
+                    tiffList[ tiffList.index( converted[p]['rgb'] ) ] = tga
+
+
+
+            if node['convertionOutputFileType'] >= 100:
+                tmp = []
+                for passFileName in tiffList:
+                    # nvdxt only outputs to the current dir, so we have to chgdir before call it.
+                    chgDir = 'cd "%s"' % os.path.dirname( passFileName )
+                    if 'win' in platform[:3]:
+                        # if path has a drive prefix, we need to first change to that drive (windows)
+                        drive = os.path.splitdrive(os.path.dirname( passFileName ))
+                        chgDir = '%s && %s' % (drive[0], chgDir)
+
+                    batch.append( '%s && nvdxt -file "%s" %s 2>&1' % (
+                        chgDir,
+                        passFileName,
+                        [
+                            ['-u8888', '-fp32x4'][node['convertionOutputRGB_depth']],
+                            '-dxt5'
+                        ][node['convertionOutputFileType']-100],
+                    ) )
+                    batch.append( '%s "%s" 2>&1' % (rm, passFileName.replace('/',slash)) )
+                    tmp.append(passFileName.replace('.tga','.dds'))
+                tiffList = tmp
+
+
+            log = []
+            amount = 0
+            m.progressWindow( endProgress=1 )
+            m.progressWindow( title="", progress=amount, status="", isInterruptable=True )
+            for cmd in batch:
+                amount = amount + 100.0/float(len(batch))
+                m.progressWindow( edit=1, progress=amount, status="Converting... %s%%" % str(int(amount)) );
+                # Check if the dialog has been cancelled
+                if m.progressWindow( query=1, isCancelled=1):
+                    m.progressWindow( endProgress=1 )
+                    raise
+
+                print m.progressWindow( query=True, progress=True )
+
+                log.append( cmd )
+                log.append( ''.join( os.popen( cmd ).readlines() ) )
+
+            m.progressWindow( endProgress=1 )
+            print '='*200
+            print '\n'.join(log)
+            print '='*200
+            print 'converted file list:'
+            print '\n'.join(tiffList)
+
+            # import converted maps into maya
+            if node['importMapsAfterConvertion']:
+                for each in tiffList:
+                    name = 'baked_%s' % os.path.splitext( os.path.basename( each ) )[0]
+                    if not m.objExists( name ):
+                        name = m.createNode('file', n=name)
+                    m.setAttr( '%s.fileTextureName' % name, each, type="string" )
+
+            return tiffList
 
     def parameters(self):
             '''
                 defines template parameters.
                 Also define a custom buttom that handles convertion of 3delight bake files to TIF
             '''
-            self.numberOfPasses = 16
 
             def convertBakedMaps(*args):
-                '''
-                    convert bake files into tif maps
-                    it uses the same mechanism the code method does to figure
-                    what is the name and path of the bake files.
+                self.convertBakedMaps()
 
-                    this is called when the "Convert Baked Maps to Tiff" button parameter is pressed in a client.
-                '''
-                node = self.getClientClass()
-                if node and self.client=='maya':
-                    import maya.cmds as m
-                    print
-                    batch = []
-                    tiffList = []
-                    for each in range( 1,16 ):
-                        passFileName = self.getPassFile(node, each)
-                        if passFileName:
-                            passFileName = passFileName[0]
-                            tiffType = '-preview8'
-                            if node['convertionOutputFileType']:
-                                tiffType = '-preview8'
-                            batch.append( 'echo Converting "%s"' % ( passFileName ) )
-                            batch.append( 'tdlmake -progress -nomipmap %s 1 "%s" "%s"' % ( tiffType, passFileName, passFileName.replace('.bake','.tif') ) )
-                            #batch.append( 'i-display "%s"' % passFileName.replace('.bake','tif') )
-                            tiffList.append(passFileName.replace('.bake','.tif'))
+            # convertion types available.
+            self.convertionTypes = {'TIFF':0}
 
+            # we store dds types as an temp env var so we don't have to do a
+            # system call everytime we evaluate the parameters method.
+            dds = {'DDS (uncompressed)':100, 'DDS (DXT5)':101,}
+            if not os.environ.has_key('___NVDXT_SLUM_EXISTS___'):
+                if os.popen('nvdxt.exe').readlines():
+                    os.environ['___NVDXT_SLUM_EXISTS___'] = str(dds)
+                else:
+                    os.environ['___NVDXT_SLUM_EXISTS___'] = '{}'
+            self.convertionTypes.update( eval(os.environ['___NVDXT_SLUM_EXISTS___']) )
 
-                    amount = 0
-                    log = []
-                    m.progressWindow( title=" "*500, progress=amount, status="0%", isInterruptable=True )
-                    for cmd in batch:
-                        m.progressWindow( edit=1, progress=amount, title="converting %s... %2.2f%%" % ( os.path.basename( cmd.split('"')[1] ), amount, ) );
-                        # Check if the dialog has been cancelled
-                        if m.progressWindow( query=1, isCancelled=1): break
-                        # Check if end condition has been reached
-                        if m.progressWindow( query=1, progress=1 ) >= 100: break
-
-                        log.append( ''.join( os.popen( cmd ).readlines() ) )
-
-                        amount += 100/len(batch)
-                    m.progressWindow( endProgress=1 )
-                    print '='*200
-                    print '\n'.join(log)
-                    print '='*200
-                    print 'TIFF file list:'
-                    print '\n'.join(tiffList)
-
-
-
+            # return the parameters
             return  group( [
                 parameter( color(0,1,0), 'colorPassThrough', help='as this node needs to be executed in order to bake, we need to hook it up \nat the end of the network, right before the shading group.\n\nConnect here the actual color output you \nwant to be passed on to the beauty pass.\n\nWARNING: THIS COLOR WONT BE BAKED TO ANY FILE!' ),
                 parameter( color(1), 'transparencyPassThrough', help='same as colorPassThrough, but for transparency.' ),
                 group( [
-                    parameter( int(1), 'convertionOutputFileType', ui=ui.popup({'8 bit TIFF':0, 'float TIFF':1, }), help='select if the converted tiff files will be 8 bit or floating point.' ),
+                    parameter( int(0), 'convertionOutputFileType', ui=ui.popup(self.convertionTypes), help='select the final file format to convert to.' ),
+                    parameter( int(1), 'convertionOutputRGB_depth', ui=ui.popup({'8 bit':0, 'float':1, }), help='select the final file rgb depth.' ),
+                    parameter( int(512), 'convertionOutputWidth', help='width resolution of final baked map.' ),
+                    parameter( int(512), 'convertionOutputHeight', help='height resolution of final baked map.' ),
+                    parameter( int(1), 'importMapsAfterConvertion', ui=ui.checkbox(), help='import or update maps into maya after convertion.' ),
                     ui.button(convertBakedMaps,'Convert Baked Maps to Tiff'),
                 ], 'Convertion Tool' ),
                 group( [
                     parameter( float(1), 'enableBake', ui=ui.checkbox(), help='enable/disable the bake to files.' ),
+                    parameter( float(0), 'render_in_uv_space', ui=ui.checkbox(), help='reproject geometry to UV space during render. Use this if you\'re baking a plane and want to assure the UV\'s will be perfect aligned with the camera.' ),
                     parameter( float(0), 'bakeType', ui=ui.popup({'2D - Bake file (ASCII)':0, '2D - Bake file (Binary)':1}), help='For now, only bakes 2D bake files as ASCII text or Binary (binary is smaller). PTC is on the way.' ),
                     parameter( "<project>/data/delight2DBake", 'bakePrefix'),
-                    group( [
-                        parameter( color(0), 'color_%02d' % (x+1) ) for x in range(self.numberOfPasses)
-                    ], 'Input Passes', opened=False ),
+                    group( [ parameter( color(0), x ) for x in self.passesNames() ], 'Input Passes', opened=False ),
                 ], 'Passes to Bake' ),
+
+                # this primvar exists so another template in the network can evaluate
+                # its existence to known if a baking is happening or not.
+                # ex: #ifdef rendermanCodeShaderParam___bakery__shader__present
+                parameter( color(1), '__bakery__shader__present', output=True, primvar=True ),
 
                 # required for 3delight surface shaders
                 parameter( color(1), 'outColor', output=True ),
@@ -154,26 +255,56 @@ class bakery(slumSurface):
 
     def delight(self, node):
             ''' code for 3delight '''
-            code=[
-                'outColor = colorPassThrough; ',
-                'outTransparency = transparencyPassThrough;',
-                'extern float s,t;'
-            ]
+            code=['''
+                 outColor = colorPassThrough;
+                 outTransparency = transparencyPassThrough;
+                 extern float s,t;
+                 extern point P;
+
+                 varying float ss = s;
+                 varying float tt = t;
+
+                 #ifdef rendermanCodeShaderParam_bakeS
+                    extern float bakeS;
+                 #else
+                    float bakeS = s;
+                 #endif
+                 #ifdef rendermanCodeShaderParam_bakeT
+                    extern float bakeT;
+                 #else
+                    float bakeT = t;
+                 #endif
+            ''']
+
+            # check if we are in maya, and if so, returns the node.attrname that
+            # is connected to the passThrough parameters, if any.
+            # that way we can account for those connected parameters being an shader_output parameter.
+            for each in ['colorPassThrough', 'transparencyPassThrough']:
+                passThrough = self.getPassFile( node, each )# [1] is the name of the connected attr. [0] is the bake filename
+                if passThrough:
+                    passThrough = passThrough[1]
+                    code.extend([
+                        '#ifdef rendermanCodeShaderParam_%s' % passThrough,
+                        '   extern varying color %s;' % passThrough,
+                        '   outColor = %s;' % passThrough,
+                        '#endif',
+                    ])
+
+            # the bake RSL code we use for every color_NN parameter
             bake_snippet = '''
                 #ifdef rendermanCodeShaderParam_%s
                     extern varying color %s;
-                    bake( "%s", s, t, %s);
+                    bake( "%s", bakeS, bakeT, %s);
                 #else
-                    bake( "%s", s, t, color_%02d);
+                    bake( "%s", bakeS, bakeT, %s);
                 #endif
             '''
 
             # loop over all color_nn parameters
-            for n in range( 1, 16 ):
-
+            for passName in self.passesNames():
                 # calls getPassFile to figure the bake filenames.
                 # getPassFile handle client-specific filename definition as well.
-                passFile = self.getPassFile( node, n )
+                passFile = self.getPassFile( node, passName )
                 if not passFile:
                     continue
 
@@ -181,8 +312,11 @@ class bakery(slumSurface):
                 if node['bakeType'] == 1:
                     passFile[0] += '&binary'
 
+                code.append( bake_snippet % ( passFile[1], passFile[1], passFile[0], passFile[1], passFile[0], passName ) )
 
-                code.append( bake_snippet % ( passFile[1], passFile[1], passFile[0], passFile[1], passFile[0], n ) )
+            if node['render_in_uv_space']:
+               code.append( 'P = point "NDC" (s*0.98+0.01,t*0.98+0.01,0);' )
+
 
             return ([], code)
 
