@@ -118,7 +118,7 @@ def _readSlumFile(path):
 
 
 # a low level method to evaluate a new template from a code string
-def evalSlumClass(code, classeName):
+def evalSlumClass(code, classeName, returnClassObj=True):
     '''
         low level class (shouldn't be directly used - refer to high level functions/classes)
         execute "code" string, and returns the class object for "classeName"
@@ -130,13 +130,11 @@ def evalSlumClass(code, classeName):
     #newCode += 'from slum.shaderClasses import *\n'
     #newCode += 'from slum.uiWrappers import *\n'
     #newCode += 'from slum.datatypes import *\n'
-    #newCode += 'try:\n\t'
-    newCode += code #.replace('\n','\n\t')
-    #newCode += '\nexcept:\n'
-    #newCode += '\traise Exception("Syntax error in slum template: \\n%s" % traceback.format_exc() )\n\n'
-    newCode += '\ntemp = %s()\n' % classeName
-    #print newCode
-    #print 'bummmm', classeName
+    newCode += code
+
+    if returnClassObj:
+        newCode += '\ntemp = %s()\n' % classeName
+
     env = {}
     try:
         exec newCode in env
@@ -144,7 +142,7 @@ def evalSlumClass(code, classeName):
         msg = formatException( 'syntax error slum class "%s":' % classeName )
         sys.stderr.write( msg )
 
-    if env.has_key('temp'):
+    if env.has_key('temp') and returnClassObj:
         ret = copy.copy(env['temp'])
 
     #ret = safe_eval('%s()' % classeName, fail_on_error = True)
