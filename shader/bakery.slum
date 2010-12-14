@@ -215,12 +215,15 @@ class bakery(slumSurface):
             # we store dds types as an temp env var so we don't have to do a
             # system call everytime we evaluate the parameters method.
             dds = {'DDS (uncompressed)':100, 'DDS (DXT5)':101,}
-            if not os.environ.has_key('___NVDXT_SLUM_EXISTS___'):
-                if os.popen('nvdxt.exe').readlines():
-                    os.environ['___NVDXT_SLUM_EXISTS___'] = str(dds)
-                else:
-                    os.environ['___NVDXT_SLUM_EXISTS___'] = '{}'
-            self.convertionTypes.update( eval(os.environ['___NVDXT_SLUM_EXISTS___']) )
+            try:
+                if not os.environ.has_key('___NVDXT_SLUM_EXISTS___'):
+                    if os.popen('nvdxt').readlines():
+                        os.environ['___NVDXT_SLUM_EXISTS___'] = str(dds)
+                    else:
+                        os.environ['___NVDXT_SLUM_EXISTS___'] = '{}'
+                self.convertionTypes.update( eval(os.environ['___NVDXT_SLUM_EXISTS___']) )
+            except:
+                pass
 
             # return the parameters
             return  group( [
@@ -228,7 +231,7 @@ class bakery(slumSurface):
                 parameter( color(1), 'transparencyPassThrough', help='same as colorPassThrough, but for transparency.' ),
                 group( [
                     parameter( int(0), 'convertionOutputFileType', ui=ui.popup(self.convertionTypes), help='select the final file format to convert to.' ),
-                    parameter( int(1), 'convertionOutputRGB_depth', ui=ui.popup({'8 bit':0, 'float':1, }), help='select the final file rgb depth.' ),
+                    parameter( int(0), 'convertionOutputRGB_depth', ui=ui.popup({'8 bit':0, 'float':1, }), help='select the final file rgb depth.' ),
                     parameter( int(512), 'convertionOutputWidth', help='width resolution of final baked map.' ),
                     parameter( int(512), 'convertionOutputHeight', help='height resolution of final baked map.' ),
                     parameter( int(1), 'importMapsAfterConvertion', ui=ui.checkbox(), help='import or update maps into maya after convertion.' ),
