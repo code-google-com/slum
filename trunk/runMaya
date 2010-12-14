@@ -2,6 +2,8 @@
 
 import os,sys
 
+os.environ['MAYA_APP_PATH'] = "%s/dev/svn/cortex4all/trunk/pipeline/apps/darwin/X86_64/maya/2011" % os.environ['HOME']
+
 if not os.environ.has_key('MAYA_PLUG_IN_PATH'):
 	os.environ['MAYA_PLUG_IN_PATH'] = ""
 

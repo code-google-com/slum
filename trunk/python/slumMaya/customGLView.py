@@ -357,22 +357,16 @@ def viewerCreator():
 	return OpenMayaMPx.asMPxPtr( customGLView() )
 
 # initialize the script plug-in
-def initialize(mplugin):
-	try:
-		mplugin.registerModelEditorCommand( kPluginCmdName, cmdCreator, viewerCreator)
-	except:
-		sys.stderr.write( "Failed to register model editor command: %s" % kPluginCmdName )
-		raise
+def initializePlugin(mpluginObj):
+    mplugin = OpenMayaMPx.MFnPlugin(mpluginObj)
+    mplugin.registerModelEditorCommand( kPluginCmdName, cmdCreator, viewerCreator)
 
 
 # uninitialize the script plug-in
-def unitialize(mplugin):
-	try:
-		mplugin.deregisterModelEditorCommand( kPluginCmdName )
-	except:
-		sys.stderr.write( "Failed to deregister model editor command: %s" % kPluginCmdName )
-		raise
-
+def uninitializePlugin(mpluginObj):
+    mplugin = OpenMayaMPx.MFnPlugin(mpluginObj)
+    mplugin.deregisterModelEditorCommand( kPluginCmdName )
+    
 
 def test(customCamera=False):
 	import maya
