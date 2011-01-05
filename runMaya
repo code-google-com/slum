@@ -2,14 +2,6 @@
 
 import os,sys
 
-os.environ['MAYA_APP_PATH'] = "%s/dev/svn/cortex4all/trunk/pipeline/apps/darwin/X86_64/maya/2011" % os.environ['HOME']
-
-if not os.environ.has_key('MAYA_PLUG_IN_PATH'):
-	os.environ['MAYA_PLUG_IN_PATH'] = ""
-
-maya = 'maya'
-if os.environ.has_key('MAYA_APP_PATH'):
-	maya = '%s/bin/maya' % os.environ['MAYA_APP_PATH']
 
 scene = ''
 if len(sys.argv)>1:
@@ -22,7 +14,7 @@ if os.environ.has_key('COMSPEC'):
 	#maya = os.popen('cygpath -wa "%s"' % maya).readlines()[0].strip()
 	#maya += '.exe'
 else:
-	os.environ['MAYA_PLUG_IN_PATH'] += os.path.pathsep+os.popen('echo `pwd`/python').readlines()[0].strip()
+	os.environ['MAYA_PLUG_IN_PATH'] = os.popen('echo `pwd`/python').readlines()[0].strip()
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/shader').readlines()[0].strip()
 
 
@@ -30,6 +22,6 @@ os.environ['MAYA_CMD_FILE_OUTPUT']='/tmp/mayalog'
 os.environ['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = "1"
 
 
-cmd = '"%s"  %s' % (maya,scene)
+cmd = 'bash -i -l -c "maya  %s"' % scene
 print cmd
 os.system(cmd)
