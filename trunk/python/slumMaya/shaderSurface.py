@@ -35,50 +35,110 @@ except:
 
 #class shaderSurface( mayaBaseClass  ):
 class shaderSurface( mayaBaseClass, shaderBase.shaderBase ):
-	def __init__(self):
-		##OpenMayaMPx.MPxNode.__init__(self)
-		mayaBaseClass.__init__(self)
-		shaderBase.shaderBase.__init__(self)
+    def __init__(self):
+        ##OpenMayaMPx.MPxNode.__init__(self)
+        mayaBaseClass.__init__(self)
+        shaderBase.shaderBase.__init__(self)
 
-	@staticmethod
-	def nodeCreator():
-		return OpenMayaMPx.asMPxPtr( shaderSurface() )
+    @staticmethod
+    def nodeCreator():
+        return OpenMayaMPx.asMPxPtr( shaderSurface() )
 
-	def render(self, geo):
-		pass
-		return True
-	def bind(  self, MDrawRequest, M3dView ):
-		pass
-	def unbind(  self, MDrawRequest, M3dView ):
-		pass
-	def geometry( self, MDrawRequest, M3dView, prim, writable, indexCount, indexArray,
-					vertexCount, vertexIDs, vertexArray, normalCount, normalArrays,
-					colorCount, colorArrays, texCoordCount, texCoordArrays ):
-		print vertexCount
+    def render(self, geo):
+        pass
+        return True
+    def bind(  self, MDrawRequest, M3dView ):
+        pass
+    def unbind(  self, MDrawRequest, M3dView ):
+        pass
+    
+    def geometry( self, MDrawRequest, M3dView, prim, writable, indexCount, indexArray,
+                    vertexCount, vertexIDs, vertexArray, normalCount, normalArrays,
+                    colorCount, colorArrays, texCoordCount, texCoordArrays ):
+                    
+        print MDrawRequest, M3dView, prim, writable, indexCount, indexArray, vertexCount, vertexIDs, vertexArray, normalCount, normalArrays,colorCount, colorArrays, texCoordCount, texCoordArrays
 
-	def renderSwatchImage ( self, image ):
-		w=0
-		h=0
-		#print dir(image)
-		image.getSize( w, h );
-		print '---->',w,h
-		'''
-		swatch = OpenMaya.MImage();
-		if swatch.readFromFile ( '/tmp/xx.tif' ):
-			swatch.resize (w, h, false);
-			image.setPixels(swatch.pixels(),w,h);
-		else:
-			swatch.create(w,h,3)
-			pixels = swatch.pixels()
-			count = 0
-			for y in range(h):
-				for x in range(w):
-					pixels[y*w+x] = count
-					count += 1
-					if count>255:
-						count=0
-			image.setPixels(swatch.pixels(),w,h);
+        import maya.OpenMayaRender as omr
 
-		dlimage.release();
-		'''
-		return True
+        glRenderer = omr.MHardwareRenderer.theRenderer()
+        gl = glRenderer.glFunctionTable()
+
+        if prim != omr.MGL_TRIANGLES and prim != omr.MGL_TRIANGLE_STRIP:
+            return False
+
+        gl.glPushAttrib ( omr.MGL_ENABLE_BIT )
+        gl.glDisable ( omr.MGL_LIGHTING )
+        gl.glDisable ( omr.MGL_TEXTURE_1D )
+        gl.glDisable ( omr.MGL_TEXTURE_2D )
+        # Setup cube map generation
+
+        gl.glEnable ( omr.MGL_TEXTURE_CUBE_MAP_ARB )
+        #gl.glBindTexture ( omr.MGL_TEXTURE_CUBE_MAP_ARB, phong_map_id )
+        gl.glEnable ( omr.MGL_TEXTURE_GEN_S )
+        gl.glEnable ( omr.MGL_TEXTURE_GEN_T )
+        gl.glEnable ( omr.MGL_TEXTURE_GEN_R )
+        gl.glTexGeni ( omr.MGL_S, omr.MGL_TEXTURE_GEN_MODE, omr.MGL_NORMAL_MAP_ARB )
+        gl.glTexGeni ( omr.MGL_T, omr.MGL_TEXTURE_GEN_MODE, omr.MGL_NORMAL_MAP_ARB )
+        gl.glTexGeni ( omr.MGL_R, omr.MGL_TEXTURE_GEN_MODE, omr.MGL_NORMAL_MAP_ARB )
+        gl.glTexParameteri(omr.MGL_TEXTURE_CUBE_MAP_ARB, omr.MGL_TEXTURE_WRAP_S, omr.MGL_CLAMP)
+        gl.glTexParameteri(omr.MGL_TEXTURE_CUBE_MAP_ARB, omr.MGL_TEXTURE_WRAP_T, omr.MGL_CLAMP)
+        gl.glTexParameteri(omr.MGL_TEXTURE_CUBE_MAP_ARB, omr.MGL_TEXTURE_MAG_FILTER, omr.MGL_LINEAR)
+        gl.glTexParameteri(omr.MGL_TEXTURE_CUBE_MAP_ARB, omr.MGL_TEXTURE_MIN_FILTER, omr.MGL_LINEAR)
+        gl.glTexEnvi ( omr.MGL_TEXTURE_ENV, omr.MGL_TEXTURE_ENV_MODE, omr.MGL_REPLACE )
+        # Could modify the texture matrix here to do light tracking...
+
+        gl.glMatrixMode ( omr.MGL_TEXTURE )
+        gl.glPushMatrix ()
+        gl.glLoadIdentity ()
+        gl.glMatrixMode ( omr.MGL_MODELVIEW )
+
+        # Draw the surface.
+        gl.glPushClientAttrib ( omr.MGL_CLIENT_VERTEX_ARRAY_BIT )
+        gl.glEnableClientState( omr.MGL_VERTEX_ARRAY )
+        gl.glVertexPointer ( 3, omr.MGL_FLOAT, 0, vertexArray )
+        #gl.glEnableClientState( omr.MGL_NORMAL_ARRAY )
+        #gl.glNormalPointer ( omr.MGL_FLOAT, 0, normalArrays )
+        gl.glDrawElements ( prim, indexCount, omr.MGL_UNSIGNED_INT, indexArray )
+        
+        # The client attribute is already being popped. You
+        gl.glPopClientAttrib()
+        gl.glMatrixMode ( omr.MGL_TEXTURE )
+        gl.glPopMatrix ()
+        gl.glMatrixMode ( omr.MGL_MODELVIEW )
+        gl.glDisable ( omr.MGL_TEXTURE_CUBE_MAP_ARB )
+        gl.glDisable ( omr.MGL_TEXTURE_GEN_S )
+        gl.glDisable ( omr.MGL_TEXTURE_GEN_T )
+        gl.glDisable ( omr.MGL_TEXTURE_GEN_R )
+        gl.glPopAttrib()
+
+        return True
+
+
+
+
+    def renderSwatchImage ( self, image ):
+        w=0
+        h=0
+        #print dir(image)
+        image.getSize( w, h )
+        print '---->',w,h
+        '''
+        swatch = OpenMaya.MImage();
+        if swatch.readFromFile ( '/tmp/xx.tif' ):
+            swatch.resize (w, h, false);
+            image.setPixels(swatch.pixels(),w,h);
+        else:
+            swatch.create(w,h,3)
+            pixels = swatch.pixels()
+            count = 0
+            for y in range(h):
+                for x in range(w):
+                    pixels[y*w+x] = count
+                    count += 1
+                    if count>255:
+                        count=0
+            image.setPixels(swatch.pixels(),w,h);
+
+        dlimage.release();
+        '''
+        return True
