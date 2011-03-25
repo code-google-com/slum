@@ -34,58 +34,58 @@ class DBmodule(type(sys)):
 
 class hslumImporter(object):
 
-	def __init__(self, item, *args, **kw):
-		print 'init',item, args, kw
-		'''
-		if item != "*db*":
-			raise ImportError
-		if debug:
-			print "dbimporter: item:", id(self), item, "args:", args, "keywords:", kw
-			print "Accepted", item
-		'''
+    def __init__(self, item, *args, **kw):
+        print 'init',item, args, kw
+        '''
+        if item != "*db*":
+            raise ImportError
+        if debug:
+            print "dbimporter: item:", id(self), item, "args:", args, "keywords:", kw
+            print "Accepted", item
+        '''
 
-	def find_module(self, fullname, path=None):
-		print 'find_module',fullname, path
-		'''
-		if debug:
-			print "%x: find_module: %s from %s" % (id(self), fullname, path)
-		if fullname not in impdict:
-			if debug:
-				print "Bailed on", fullname
-			return None
-		else:
-			if debug:
-				print "found", fullname, "in db"
-			return self
-		'''
+    def find_module(self, fullname, path=None):
+        print 'find_module',fullname, path
+        '''
+        if debug:
+            print "%x: find_module: %s from %s" % (id(self), fullname, path)
+        if fullname not in impdict:
+            if debug:
+                print "Bailed on", fullname
+            return None
+        else:
+            if debug:
+                print "found", fullname, "in db"
+            return self
+        '''
 
-	def load_module(self, modname):
-		print 'load_module'
-		if debug:
-			print "%x: load_module: %s" % (id(self), modname)
+    def load_module(self, modname):
+        print 'load_module'
+        if debug:
+            print "%x: load_module: %s" % (id(self), modname)
 
-		# return it if already loaded
-		if modname in sys.modules:
-			return sys.modules[modname]
+        # return it if already loaded
+        if modname in sys.modules:
+            return sys.modules[modname]
 
-		# load it
-		if False:
-			raise ImportError, "DB module %s not found in modules"
+        # load it
+        if False:
+            raise ImportError, "DB module %s not found in modules"
 
-		code, package, path = ("","","")
-		code = marshal.loads(code)
-		module = DBmodule(modname)
-		sys.modules[modname] = module
-		module.__name__ = modname
-		module.__file__ = path # was "db:%s" % modname
-		module.__loader__ = self
-		if package:
-			module.__path__ = ["*db*"]
-		exec code in module.__dict__
-		if debug:
-			print modname, "loaded:", module, "pkg:", package
+        code, package, path = ("","","")
+        code = marshal.loads(code)
+        module = DBmodule(modname)
+        sys.modules[modname] = module
+        module.__name__ = modname
+        module.__file__ = path # was "db:%s" % modname
+        module.__loader__ = self
+        if package:
+            module.__path__ = ["*db*"]
+        exec code in module.__dict__
+        if debug:
+            print modname, "loaded:", module, "pkg:", package
 
-		return module
+        return module
 
 
 def install():

@@ -22,90 +22,84 @@
 
 
 class shadow(slumSurface):
-	def ID(self):
-		'''
-			a unique ID that identifys the shader inside slum. If you upload
-			this template to a online repository, this method will be replaced
-			automatically by the repository server, with the next global available ID.
-		'''
-		return 115
+    def ID(self):
+        '''
+            a unique ID that identifys the shader inside slum. If you upload
+            this template to a online repository, this method will be replaced
+            automatically by the repository server, with the next global available ID.
+        '''
+        return 115
 
-	def parameters(self):
-		'''
-			This method defines all the parameter for our shader template. Keep in mind that here you define
-			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
-			defines.
-		'''
-		#CI 	= parameter( color(1), 'CI', help = 'Shadow.' )
-		#OI 	= parameter( color(1), 'OI', help = 'Opacity.' )
+    def parameters(self):
+        '''
+            This method defines all the parameter for our shader template. Keep in mind that here you define
+            the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+            defines.
+        '''
+        #CI 	= parameter( color(1), 'CI', help = 'Shadow.' )
+        #OI 	= parameter( color(1), 'OI', help = 'Opacity.' )
 
-		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
-		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+        OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+        OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
-		return  group( [
-			OutColor,
-			OutTransparency,
-			
-		], name = 'shadow' )
+        return  group( [
+            OutColor,
+            OutTransparency,
+            
+        ], name = 'shadow' )
 
 
-	def delight(self, node):
-		'''
-			Outputs the shadow only, extracted from the lights.
+    def delight(self, node):
+        '''
+            Outputs the shadow only, extracted from the lights.
 
-			3deligth light shaders only output 2 shadow related variables:
-					color __3dfm_unshadowed_cl - CL whitout shadow
-					float __3dfm_shadowing - shadow luminance as float
+            3deligth light shaders only output 2 shadow related variables:
+                    color __3dfm_unshadowed_cl - CL whitout shadow
+                    float __3dfm_shadowing - shadow luminance as float
 
-			we can use the following formula to extract the colored
-			shadow from the light:
-				   
-				lightsource( "__3dfm_unshadowed_cl", unshadowedCL ); 
-				shd = Cl - unshadowedCL;
-		'''
-		# 3deligth shader parameters
-		shaderPars = [
-			#'color CI		= %s;'	% node['CI'],
-			#'color OI		= %s;'	% node['OI'],
-			'shader_output varying color _SHADOW=0;',
-			
+            we can use the following formula to extract the colored
+            shadow from the light:
+                   
+                lightsource( "__3dfm_unshadowed_cl", unshadowedCL ); 
+                shd = Cl - unshadowedCL;
+        '''
+        # 3deligth shader extra parameters
+        shaderPars = [
+            'shader_output varying color _SHADOW=0;',
+        ]
 
-			'output varying color outColor=0;',
-			'output varying color outTransparency=0;'
-		]
+        # shader code
+        code=['''
+                extern point P;
+                extern normal N;
+                extern vector I;
 
-		# shader code
-		code=['''
-				extern point P;
-				extern normal N;
-				extern vector I;
+                normal Nn = normalize(N);
 
-				normal Nn = normalize(N);
+                color shd = 0;
+                color unshadowedCL = 0;
+                illuminance( P, Nn, PI/2 )
+                    {
+                    extern vector L;
+                    extern color Cl;
+                    vector Ln=normalize(L);
+                    float dot = Nn.Ln;
 
-				color shd = 0;
-				color unshadowedCL = 0;
-				illuminance( P, Nn, PI/2 )
-					{
-					extern vector L;
-					extern color Cl;
-					vector Ln=normalize(L);
-					float dot = Nn.Ln;
+                    lightsource( "__3dfm_unshadowed_cl", unshadowedCL ); 
+                    shd = unshadowedCL;
+                    
+                    dot=smoothstep(0,0.1,dot);	
+                    shd*=dot;
+                }
+                outColor = shd;
+                _SHADOW= shd;
+                
+            ''']
 
-					lightsource( "__3dfm_unshadowed_cl", unshadowedCL ); 
-					shd = unshadowedCL;
-					
-					dot=smoothstep(0,0.1,dot);	
-					shd*=dot;
-				}
-				outColor = shd;
-				_SHADOW= shd;
-				
-			''']
+        # return a tupple
+        return (shaderPars, code)
 
-		# return a tupple
-		return (shaderPars, code)
-
-	def cgfx(self, node):
-		code=['''
-		''']
-		return ("",code)
+    def cgfx(self, node):
+        code=['''
+        ''']
+        return ("",code)

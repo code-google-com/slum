@@ -21,49 +21,41 @@
 # ---------------------------------------------------------------------------
 
 class depth(slumSurface):
-	def ID(self):
-		return 106
+    def ID(self):
+        return 106
 
-	def parameters(self):
-		offset 	= parameter( 0.0, 'offset', help = 'offset.', max = 10, min = 0 )
-		scale 	= parameter( 1.0, 'scale', help = 'scale.', max = 10, min = 0 )
+    def parameters(self):
+        offset 	= parameter( 0.0, 'offset', help = 'offset.', max = 10, min = 0 )
+        scale 	= parameter( 1.0, 'scale', help = 'scale.', max = 10, min = 0 )
 
-		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
-		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+        OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+        OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
-		return  group( [
-			OutColor,
-			OutTransparency,
-			offset,
-			scale,
-		], name = 'depth' )
+        return  group( [
+            OutColor,
+            OutTransparency,
+            offset,
+            scale,
+        ], name = 'depth' )
 
 
-	def delight(self, node):
-		# 3deligth shader parameters
-		shaderPars = [
-			'float offset 	= %f;'	% node['offset'],
-			'float scale 	= %f;'	% node['scale'],
-			'shader_output varying color _DEPTH=0;',
-			
+    def delight(self, node):
+        # 3deligth shader extra parameters
+        shaderPars = []
 
-			'output varying color outColor=0;',
-			'output varying color outTransparency=0;'
-		]
+        # shader code
+        code=['''
+                extern normal N;
+                extern point P;
+                outColor=depth( P )*scale+offset;
+                _DEPTH=depth( P )*scale+offset;
+                
+            ''']
 
-		# shader code
-		code=['''
-				extern normal N;
-				extern point P;
-				outColor=depth( P )*scale+offset;
-				_DEPTH=depth( P )*scale+offset;
-				
-			''']
+        # return a tupple
+        return (shaderPars, code)
 
-		# return a tupple
-		return (shaderPars, code)
-
-	def cgfx(self, node):
-		code=['''
-		''']
-		return ("",code)
+    def cgfx(self, node):
+        code=['''
+        ''']
+        return ("",code)

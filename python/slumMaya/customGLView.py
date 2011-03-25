@@ -49,312 +49,312 @@ kToleranceFlag = "-tol"
 kToleranceFlagLong = "-tolerance"
 
 class customGLView(OpenMayaMPx.MPx3dModelView):
-	def __init__(self):
-		OpenMayaMPx.MPx3dModelView.__init__(self)
+    def __init__(self):
+        OpenMayaMPx.MPx3dModelView.__init__(self)
 
-		self.fOldCamera = OpenMaya.MDagPath()
-		self.fCameraList = OpenMaya.MDagPathArray()
-		self.fCurrentPass = 0
-		self.fDrawManips = True
-		self.fOldDisplayStyle = OpenMayaUI.M3dView.kWireFrame
-		self.fLightTest = False
-		self.fListList = OpenMaya.MDagPathArray()
-		self.tol = 10.0
+        self.fOldCamera = OpenMaya.MDagPath()
+        self.fCameraList = OpenMaya.MDagPathArray()
+        self.fCurrentPass = 0
+        self.fDrawManips = True
+        self.fOldDisplayStyle = OpenMayaUI.M3dView.kWireFrame
+        self.fLightTest = False
+        self.fListList = OpenMaya.MDagPathArray()
+        self.tol = 10.0
 
-		self.setMultipleDrawEnable(True)
+        self.setMultipleDrawEnable(True)
 
-	def multipleDrawPassCount(self):
-		return self.fCameraList.length() + 1
+    def multipleDrawPassCount(self):
+        return self.fCameraList.length() + 1
 
-	def setCameraList(self, cameraList):
-		setMultipleDrawEnable(True)
-		self.fCameraList.clear()
+    def setCameraList(self, cameraList):
+        setMultipleDrawEnable(True)
+        self.fCameraList.clear()
 
-		for i in range(cameraList.length()):
-			self.fCameraList.append(cameraList[i])
+        for i in range(cameraList.length()):
+            self.fCameraList.append(cameraList[i])
 
-		self.refresh()
+        self.refresh()
 
-	def removeAllCameras(self):
-		self.fCameraList.clear()
-		self.refresh()
+    def removeAllCameras(self):
+        self.fCameraList.clear()
+        self.refresh()
 
-	def getCameraHUDName(self):
-		cameraPath = OpenMaya.MDagPath()
-		self.getCamera(cameraPath)
+    def getCameraHUDName(self):
+        cameraPath = OpenMaya.MDagPath()
+        self.getCamera(cameraPath)
 
-		cameraPath.pop()
+        cameraPath.pop()
 
-		hudName = "spNarrowPolyViewer: " + cameraPath.partialPathName()
-		return hudName
+        hudName = "spNarrowPolyViewer: " + cameraPath.partialPathName()
+        return hudName
 
-	def setIsolateSelect(self, list):
-		self.setViewSelected(True)
-		return self.setObjectsToView(list)
+    def setIsolateSelect(self, list):
+        self.setViewSelected(True)
+        return self.setObjectsToView(list)
 
-	def setIsolateSelectOff(self):
-		return self.setViewSelected(False)
+    def setIsolateSelectOff(self):
+        return self.setViewSelected(False)
 
-	def preMultipleDraw(self):
-		self.fCurrentPass = 0
-		self.fDrawManips = False
+    def preMultipleDraw(self):
+        self.fCurrentPass = 0
+        self.fDrawManips = False
 
-		self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayEverything, False)
+        self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayEverything, False)
 
-		self.setDrawAdornments(False)
-		self.setDisplayHUD(False)
-		self.setDisplayAxis(False)
-		self.setDisplayAxisAtOrigin(False)
-		self.setDisplayCameraAnnotation(False)
-		self.setViewSelected(True)
+        self.setDrawAdornments(False)
+        self.setDisplayHUD(False)
+        self.setDisplayAxis(False)
+        self.setDisplayAxisAtOrigin(False)
+        self.setDisplayCameraAnnotation(False)
+        self.setViewSelected(True)
 
-		self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayGrid, True)
+        self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayGrid, True)
 
-		'''
+        '''
 
-		dagPath = OpenMaya.MDagPath()
-		try:
-			oldCamera = OpenMaya.MDagPath()
-			self.getCamera(oldCamera)
+        dagPath = OpenMaya.MDagPath()
+        try:
+            oldCamera = OpenMaya.MDagPath()
+            self.getCamera(oldCamera)
 
-			self.fOldCamera = oldCamera
+            self.fOldCamera = oldCamera
 
-			#if self.isColorIndexMode():
-			#	self.setColorIndexMode(False)
+            #if self.isColorIndexMode():
+            #	self.setColorIndexMode(False)
 
-			displayHUD(False)
+            displayHUD(False)
 
-			sList = OpenMaya.MSelectionList()
-			OpenMaya.MGlobal.getActiveSelectionList(sList)
+            sList = OpenMaya.MSelectionList()
+            OpenMaya.MGlobal.getActiveSelectionList(sList)
 
-			sList.getDagPath(0, dagPath)
-		except:
-			# sys.stderr.write("ERROR: spNarrowPolyViewer.preMultipleDraw b\n")
-			pass
+            sList.getDagPath(0, dagPath)
+        except:
+            # sys.stderr.write("ERROR: spNarrowPolyViewer.preMultipleDraw b\n")
+            pass
 
-		try:
-			itMeshPolygon = OpenMaya.MItMeshPolygon(dagPath, OpenMaya.cvar.MObject_kNullObj)
+        try:
+            itMeshPolygon = OpenMaya.MItMeshPolygon(dagPath, OpenMaya.cvar.MObject_kNullObj)
 
-			if None == itMeshPolygon:
-				return;
+            if None == itMeshPolygon:
+                return;
 
-			self.beginGL()
-			while not itMeshPolygon.isDone():
-				points = OpenMaya.MPointArray()
-				itMeshPolygon.getPoints(points, OpenMaya.MSpace.kWorld)
-				length = points.length()
+            self.beginGL()
+            while not itMeshPolygon.isDone():
+                points = OpenMaya.MPointArray()
+                itMeshPolygon.getPoints(points, OpenMaya.MSpace.kWorld)
+                length = points.length()
 
-				if length == 3:
-					for i in range(length):
-						p = points[i]
-						p1 = points[(i+1)%length]
-						p2 = points[(i+2)%length]
+                if length == 3:
+                    for i in range(length):
+                        p = points[i]
+                        p1 = points[(i+1)%length]
+                        p2 = points[(i+2)%length]
 
-						v1 = OpenMaya.MVector(p1 - p)
-						v2 = OpenMaya.MVector(p2 - p)
+                        v1 = OpenMaya.MVector(p1 - p)
+                        v2 = OpenMaya.MVector(p2 - p)
 
-						angle = v1.angle(v2) * 180.0 / math.pi
+                        angle = v1.angle(v2) * 180.0 / math.pi
 
-						if math.fabs(angle - self.tol) < 0.0001 or angle < self.tol:
-							glFT.glBegin( OpenMayaRender.MGL_POLYGON )
-							glFT.glVertex3f(points[0].x, points[0].y, points[0].z)
-							glFT.glVertex3f(points[1].x, points[1].y, points[1].z)
-							glFT.glVertex3f(points[2].x, points[2].y, points[2].z)
+                        if math.fabs(angle - self.tol) < 0.0001 or angle < self.tol:
+                            glFT.glBegin( OpenMayaRender.MGL_POLYGON )
+                            glFT.glVertex3f(points[0].x, points[0].y, points[0].z)
+                            glFT.glVertex3f(points[1].x, points[1].y, points[1].z)
+                            glFT.glVertex3f(points[2].x, points[2].y, points[2].z)
 
-							glFT.glNormal3f(points[0].x, points[0].y, points[0].z)
-							glFT.glNormal3f(points[1].x, points[1].y, points[1].z)
-							glFT.glNormal3f(points[2].x, points[2].y, points[2].z)
+                            glFT.glNormal3f(points[0].x, points[0].y, points[0].z)
+                            glFT.glNormal3f(points[1].x, points[1].y, points[1].z)
+                            glFT.glNormal3f(points[2].x, points[2].y, points[2].z)
 
-							glFT.glTexCoord3f(points[0].x, points[0].y, points[0].z)
-							glFT.glTexCoord3f(points[1].x, points[1].y, points[1].z)
-							glFT.glTexCoord3f(points[2].x, points[2].y, points[2].z)
-							glFT.glEnd()
+                            glFT.glTexCoord3f(points[0].x, points[0].y, points[0].z)
+                            glFT.glTexCoord3f(points[1].x, points[1].y, points[1].z)
+                            glFT.glTexCoord3f(points[2].x, points[2].y, points[2].z)
+                            glFT.glEnd()
 
-				itMeshPolygon.next()
-			self.endGL()
-		except:
-			#sys.stderr.write("ERROR: spNarrowPolyViewer.preMultipleDraw c\n")
-			pass
-		'''
+                itMeshPolygon.next()
+            self.endGL()
+        except:
+            #sys.stderr.write("ERROR: spNarrowPolyViewer.preMultipleDraw c\n")
+            pass
+        '''
 
-	def postMultipleDraw(self):
-		try:
-			#self.setCamera(self.fOldCamera)
-			self.fDrawManips = False
-			#self.updateViewingParameters()
-		except:
-			sys.stderr.write("ERROR: spNarrowPolyViewer.postMultipleDraw\n")
-			raise
+    def postMultipleDraw(self):
+        try:
+            #self.setCamera(self.fOldCamera)
+            self.fDrawManips = False
+            #self.updateViewingParameters()
+        except:
+            sys.stderr.write("ERROR: spNarrowPolyViewer.postMultipleDraw\n")
+            raise
 
-	def preMultipleDrawPass(self, index):
-		self.fCurrentPass = index
-		'''
-		try:
-			self.setDrawAdornments(False)
-			self.setDisplayHUD(False)
-			self.setDisplayAxis(False)
-			self.setDisplayAxisAtOrigin(False)
-			self.setDisplayCameraAnnotation(False)
-			self.setViewSelected(True)
+    def preMultipleDrawPass(self, index):
+        self.fCurrentPass = index
+        '''
+        try:
+            self.setDrawAdornments(False)
+            self.setDisplayHUD(False)
+            self.setDisplayAxis(False)
+            self.setDisplayAxisAtOrigin(False)
+            self.setDisplayCameraAnnotation(False)
+            self.setViewSelected(True)
 
-			dagPath = OpenMaya.MDagPath()
+            dagPath = OpenMaya.MDagPath()
 
-			if self.fCurrentPass == 0:
-				self.getCamera(dagPath)
-			else:
-				nCameras = self.fCameraList.length()
-				if self.fCurrentPass <= nCameras:
-					dagPath = self.fCameraList[self.fCurrentPass-1]
-				else:
-					sys.stderr.write("ERROR: ...too many passes specified\n")
-					return
+            if self.fCurrentPass == 0:
+                self.getCamera(dagPath)
+            else:
+                nCameras = self.fCameraList.length()
+                if self.fCurrentPass <= nCameras:
+                    dagPath = self.fCameraList[self.fCurrentPass-1]
+                else:
+                    sys.stderr.write("ERROR: ...too many passes specified\n")
+                    return
 
-			self.setCameraInDraw(dagPath)
+            self.setCameraInDraw(dagPath)
 
-			self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayEverything, False)
+            self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayEverything, False)
 
-			if dagPath == self.fOldCamera:
-				self.fDrawManips = False
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayGrid, True)
+            if dagPath == self.fOldCamera:
+                self.fDrawManips = False
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayGrid, True)
 
-				self.setFogEnabled(False)
+                self.setFogEnabled(False)
 
-				self.setBackgroundFogEnabled(False)
+                self.setBackgroundFogEnabled(False)
 
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayLights, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayCameras, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayIkHandles, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayDimensions, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplaySelectHandles, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayLights, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayCameras, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayIkHandles, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayDimensions, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplaySelectHandles, False)
 
-				textPos = OpenMaya.MPoint(0.0, 0.0, 0.0)
-				str = "Main View"
-				self.drawText(str, textPos, OpenMayaUI.M3dView.kLeft)
-			else:
-				self.fDrawManips = False
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayGrid, True)
+                textPos = OpenMaya.MPoint(0.0, 0.0, 0.0)
+                str = "Main View"
+                self.drawText(str, textPos, OpenMayaUI.M3dView.kLeft)
+            else:
+                self.fDrawManips = False
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayGrid, True)
 
-				self.setFogEnabled(False)
+                self.setFogEnabled(False)
 
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayLights, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayCameras, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayIkHandles, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayDimensions, False)
-				self.setObjectDisplay(OpenMayaUI.M3dView.kDisplaySelectHandles, False)
-		except:
-			sys.stderr.write("ERROR: spNarrowPolyViewer.preMultipleDrawPass\n")
-			raise
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayLights, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayCameras, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayIkHandles, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayDimensions, False)
+                self.setObjectDisplay(OpenMayaUI.M3dView.kDisplaySelectHandles, False)
+        except:
+            sys.stderr.write("ERROR: spNarrowPolyViewer.preMultipleDrawPass\n")
+            raise
 
-		# note do not have light test in here
+        # note do not have light test in here
 
-		# self.setLightingMode(OpenMayaUI.kLightDefault)
+        # self.setLightingMode(OpenMayaUI.kLightDefault)
 
-		if ((self.fCurrentPass % 2) == 0):
-			self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayNurbsSurfaces, True );
-			self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayNurbsCurves, True );
+        if ((self.fCurrentPass % 2) == 0):
+            self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayNurbsSurfaces, True );
+            self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayNurbsCurves, True );
 
-		#self.updateViewingParameters()
-		'''
+        #self.updateViewingParameters()
+        '''
 
-	def postMultipleDrawPass(self, index):
-		self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayEverything, False)
+    def postMultipleDrawPass(self, index):
+        self.setObjectDisplay(OpenMayaUI.M3dView.kDisplayEverything, False)
 
-	def okForMultipleDraw(self, dagPath):
-		if not self.fDrawManips and dagPath.hasFn(OpenMaya.MFn.kManipulator3D):
-			return False
-		return True
+    def okForMultipleDraw(self, dagPath):
+        if not self.fDrawManips and dagPath.hasFn(OpenMaya.MFn.kManipulator3D):
+            return False
+        return True
 
-	def multipleDrawPassCount(self):
-		return self.fCameraList.length() + 1
+    def multipleDrawPassCount(self):
+        return self.fCameraList.length() + 1
 
-	def viewType(self):
-		return kPluginCmdName;
+    def viewType(self):
+        return kPluginCmdName;
 
 
 
 
 class customGLViewCmd(OpenMayaMPx.MPxModelEditorCommand):
-	def __init__(self):
-		OpenMayaMPx.MPxModelEditorCommand.__init__(self)
-		self.fCameraList = OpenMaya.MDagPathArray()
+    def __init__(self):
+        OpenMayaMPx.MPxModelEditorCommand.__init__(self)
+        self.fCameraList = OpenMaya.MDagPathArray()
 
-	def appendSyntax(self):
-		try:
-			theSyntax = self._syntax()
-			theSyntax.addFlag(kInitFlag, kInitFlagLong)
-			theSyntax.addFlag(kResultsFlag, kResultsFlagLong)
-			theSyntax.addFlag(kClearFlag, kClearFlagLong)
-			theSyntax.addFlag(kToleranceFlag, kToleranceFlagLong, OpenMaya.MSyntax.kDouble)
+    def appendSyntax(self):
+        try:
+            theSyntax = self._syntax()
+            theSyntax.addFlag(kInitFlag, kInitFlagLong)
+            theSyntax.addFlag(kResultsFlag, kResultsFlagLong)
+            theSyntax.addFlag(kClearFlag, kClearFlagLong)
+            theSyntax.addFlag(kToleranceFlag, kToleranceFlagLong, OpenMaya.MSyntax.kDouble)
 
-		except:
-			sys.stderr.write( "ERROR: creating syntax for model editor command: %s" % kPluginCmdName )
+        except:
+            sys.stderr.write( "ERROR: creating syntax for model editor command: %s" % kPluginCmdName )
 
-	def doEditFlags(self):
-		try:
-			user3dModelView = self.modelView()
+    def doEditFlags(self):
+        try:
+            user3dModelView = self.modelView()
 
-			if user3dModelView.viewType() == kPluginCmdName:
-				argData = self._parser()
+            if user3dModelView.viewType() == kPluginCmdName:
+                argData = self._parser()
 
-				if argData.isFlagSet(kInitFlag):
-					self.initTests(user3dModelView)
-				elif argData.isFlagSet(kResultsFlag):
-					self.testResults(user3dModelView)
-				elif argData.isFlagSet(kClearFlag):
-					self.clearResults(user3dModelView)
-				elif argData.isFlagSet(kToleranceFlag):
-					tol = argData.flagArgumentDouble(kToleranceFlag, 0)
-					user3dModelView.tol = tol
-					user3dModelView.refresh(True, True)
-				else:
-					return OpenMaya.kUnknownParameter
-		except:
-			sys.stderr.write( "ERROR: in doEditFlags for model editor command: %s" % kPluginCmdName )
+                if argData.isFlagSet(kInitFlag):
+                    self.initTests(user3dModelView)
+                elif argData.isFlagSet(kResultsFlag):
+                    self.testResults(user3dModelView)
+                elif argData.isFlagSet(kClearFlag):
+                    self.clearResults(user3dModelView)
+                elif argData.isFlagSet(kToleranceFlag):
+                    tol = argData.flagArgumentDouble(kToleranceFlag, 0)
+                    user3dModelView.tol = tol
+                    user3dModelView.refresh(True, True)
+                else:
+                    return OpenMaya.kUnknownParameter
+        except:
+            sys.stderr.write( "ERROR: in doEditFlags for model editor command: %s" % kPluginCmdName )
 
-	def initTests(self, view):
-		clearResults(self, view)
+    def initTests(self, view):
+        clearResults(self, view)
 
-		# Add every camera into the scene.  Don't change the main camera,
-		# it is OK that it gets reused.
-		#
-		cameraPath = OpenMaya.MDagPath()
-		dagIterator = OpenMaya.MItDag(OpenMaya.MItDag.kDepthFirst, OpenMaya.MFn.kCamera)
+        # Add every camera into the scene.  Don't change the main camera,
+        # it is OK that it gets reused.
+        #
+        cameraPath = OpenMaya.MDagPath()
+        dagIterator = OpenMaya.MItDag(OpenMaya.MItDag.kDepthFirst, OpenMaya.MFn.kCamera)
 
-		while not dagIterator.isDone():
-			try:
-				dagIterator.getPath(cameraPath)
-				camera = OpenMaya.MFnCamera(cameraPath)
-			except:
-				continue
+        while not dagIterator.isDone():
+            try:
+                dagIterator.getPath(cameraPath)
+                camera = OpenMaya.MFnCamera(cameraPath)
+            except:
+                continue
 
-			OpenMaya.MGlobal.displayInfo(camera.fullPathName())
-			self.fCameraList.append(cameraPath)
+            OpenMaya.MGlobal.displayInfo(camera.fullPathName())
+            self.fCameraList.append(cameraPath)
 
-			dagIterator.next()
+            dagIterator.next()
 
-		try:
-			view.setCameraList(self.fCameraList)
-		except:
-			OpenMaya.MGlobal.displayError("Could not set list of cameras\n")
-			raise
+        try:
+            view.setCameraList(self.fCameraList)
+        except:
+            OpenMaya.MGlobal.displayError("Could not set list of cameras\n")
+            raise
 
-		view.refresh()
+        view.refresh()
 
-	def testResults(self, view):
-		print "fCameraLIst.length() = %d " % (self.fCameraList.length(), )
-		length = self.fCameraList.length()
+    def testResults(self, view):
+        print "fCameraLIst.length() = %d " % (self.fCameraList.length(), )
+        length = self.fCameraList.length()
 
-	def clearResults(self, view):
-		view.removeAllCameras()
-		self.fCameraList.clear()
+    def clearResults(self, view):
+        view.removeAllCameras()
+        self.fCameraList.clear()
 
 
 
 def cmdCreator():
-	return OpenMayaMPx.asMPxPtr( customGLViewCmd() )
+    return OpenMayaMPx.asMPxPtr( customGLViewCmd() )
 
 def viewerCreator():
-	return OpenMayaMPx.asMPxPtr( customGLView() )
+    return OpenMayaMPx.asMPxPtr( customGLView() )
 
 # initialize the script plug-in
 def initializePlugin(mpluginObj):
@@ -369,25 +369,25 @@ def uninitializePlugin(mpluginObj):
     
 
 def test(customCamera=False):
-	import maya
-	import slumMaya
+    import maya
+    import slumMaya
 
 
-	window	= maya.cmds.window()
-	form 	= maya.cmds.formLayout()
-	editor	= maya.cmds.customGLView()
+    window	= maya.cmds.window()
+    form 	= maya.cmds.formLayout()
+    editor	= maya.cmds.customGLView()
 
-	maya.cmds.formLayout(form,edit=True,attachForm=(editor, "top", 		0))
-	maya.cmds.formLayout(form,edit=True,attachForm=(editor, "bottom", 	0))
-	maya.cmds.formLayout(form,edit=True,attachForm=(editor, "right", 	0))
-	maya.cmds.formLayout(form,edit=True,attachForm=(editor, "left", 	0))
+    maya.cmds.formLayout(form,edit=True,attachForm=(editor, "top", 		0))
+    maya.cmds.formLayout(form,edit=True,attachForm=(editor, "bottom", 	0))
+    maya.cmds.formLayout(form,edit=True,attachForm=(editor, "right", 	0))
+    maya.cmds.formLayout(form,edit=True,attachForm=(editor, "left", 	0))
 
-	if customCamera:
-		camera = maya.cmds.camera(centerOfInterest=2.450351, position=(1.535314,1.135712,1.535314), rotation=(-27.612504,45,0), worldUp=(-0.1290301,0.3488592,-0.1290301))
-		maya.cmds.customGLView(editor,edit=True,camera=camera[0])
-		maya.cmds.currentTime(10.0,edit=True)
-		maya.cmds.customGLView(editor,edit=True,i=True)
-		maya.cmds.refresh()
-		maya.cmds.customGLView(editor,edit=True,r=True)
+    if customCamera:
+        camera = maya.cmds.camera(centerOfInterest=2.450351, position=(1.535314,1.135712,1.535314), rotation=(-27.612504,45,0), worldUp=(-0.1290301,0.3488592,-0.1290301))
+        maya.cmds.customGLView(editor,edit=True,camera=camera[0])
+        maya.cmds.currentTime(10.0,edit=True)
+        maya.cmds.customGLView(editor,edit=True,i=True)
+        maya.cmds.refresh()
+        maya.cmds.customGLView(editor,edit=True,r=True)
 
-	maya.cmds.showWindow(window)
+    maya.cmds.showWindow(window)
