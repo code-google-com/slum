@@ -137,40 +137,40 @@ class slum:
 
 
 class slumSurface(slum):
-	''' this class is used in a slum template when defining surface shaders.
-	this class is basically a normal slum class, with the override of the type method.
-	This classes are being defined here to make a slum template easier to read, with just the
-	methods that are really needed on it.'''
-	@staticmethod
-	def type():
-		return 'surface'
+    ''' this class is used in a slum template when defining surface shaders.
+    this class is basically a normal slum class, with the override of the type method.
+    This classes are being defined here to make a slum template easier to read, with just the
+    methods that are really needed on it.'''
+    @staticmethod
+    def type():
+        return 'surface'
 
 class slumVolume(slum):
-	''' this class is used in a slum template when defining volume shaders '''
-	@staticmethod
-	def type():
-		return 'volume'
+    ''' this class is used in a slum template when defining volume shaders '''
+    @staticmethod
+    def type():
+        return 'volume'
 
 class slumDisplacement(slum):
-	''' this class is used in a slum template when defining displacement shaders '''
-	@staticmethod
-	def type():
-		return 'displacement'
+    ''' this class is used in a slum template when defining displacement shaders '''
+    @staticmethod
+    def type():
+        return 'displacement'
 
 class slumLight(slum):
-	''' this class is used in a slum template when defining light shaders '''
-	@staticmethod
-	def type():
-		return 'light'
+    ''' this class is used in a slum template when defining light shaders '''
+    @staticmethod
+    def type():
+        return 'light'
 
 class slumColor(slum):
-	''' this class is used in a slum template when defining color utility shaders '''
-	@staticmethod
-	def type():
-		return 'color'
+    ''' this class is used in a slum template when defining color utility shaders '''
+    @staticmethod
+    def type():
+        return 'color'
 
 class slumFloat(slum):
-	''' this class is used in a slum template when defining float utility shaders '''
-	@staticmethod
-	def type():
-		return 'float'
+    ''' this class is used in a slum template when defining float utility shaders '''
+    @staticmethod
+    def type():
+        return 'float'

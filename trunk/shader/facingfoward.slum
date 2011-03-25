@@ -22,51 +22,44 @@
 # ---------------------------------------------------------------------------
 
 class facingForward(slumSurface):
-	def ID(self):
-		return 101
+    def ID(self):
+        return 101
 
-	def parameters(self):
-		Clamp = parameter( 0, 'Clamp', help = 'Clamp.', max = 1, min = 0 )
-		Invert = parameter( 0, 'Invert', help = 'Invert.', max = 1, min = 0 )
-		Attenuation = parameter( 2, 'Attenuation', help = 'Attenuation. ', max = 10, min = 0 )
+    def parameters(self):
+        Clamp = parameter( 0, 'Clamp', help = 'Clamp.', max = 1, min = 0 )
+        Invert = parameter( 0, 'Invert', help = 'Invert.', max = 1, min = 0 )
+        Attenuation = parameter( 2, 'Attenuation', help = 'Attenuation. ', max = 10, min = 0 )
 
-		OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
-		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+        OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
+        OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
-		return  group( [
-			OutColor,
-			OutTransparency,
-			Clamp,
-			Invert,
-			Attenuation,
-		], name = 'FacingForward' )
+        return  group( [
+            OutColor,
+            OutTransparency,
+            Clamp,
+            Invert,
+            Attenuation,
+        ], name = 'FacingForward' )
 
 
-	def delight(self, node):
-		# 3deligth shader parameters
-		shaderPars = [
+    def delight(self, node):
+        # 3deligth shader extra parameters
+        shaderPars = [
+            'shader_output varying color _FACINGFORWARD=0;',
+        ]
 
-			'float Clamp 	= %f;'	% node['Clamp'],
-			'float Invert 	= %f;'	% node['Invert'],
-			'float Attenuation 	= %f;'	% node['Attenuation'],
-			'shader_output varying color _FACINGFORWARD=0;',
+        # shader code
+        code=['''
+                extern normal N;
+                extern vector I;
+                vector II = normalize(I);
+                normal NN = normalize(N);
+                float cos = -II.NN;
+                outColor = pow(cos, Attenuation) * (cos/abs(cos));
+                outColor = Clamp  != 0 ? clamp(outColor, 0, 1) : outColor;
+                outColor = Invert != 0 ? 1 - outColor 		   : outColor;
+                _FACINGFORWARD = outColor;
+            ''']
 
-			'output varying color outColor=0;',
-			'output varying color outTransparency=0;'
-		]
-
-		# shader code
-		code=['''
-				extern normal N;
-				extern vector I;
-				vector II = normalize(I);
-				normal NN = normalize(N);
-				float cos = -II.NN;
-				outColor = pow(cos, Attenuation) * (cos/abs(cos));
-				outColor = Clamp  != 0 ? clamp(outColor, 0, 1) : outColor;
-				outColor = Invert != 0 ? 1 - outColor 		   : outColor;
-				_FACINGFORWARD = outColor;
-			''']
-
-		# return a tupple
-		return (shaderPars, code)
+        # return a tupple
+        return (shaderPars, code)

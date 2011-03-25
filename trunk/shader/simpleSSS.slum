@@ -46,17 +46,8 @@ class simpleSSS(slumSurface):
 
 
     def delight(self, node):
-            # 3deligth shader parameters
-            shaderPars = [
-                    'float SSSIntensity		= %f;'	% node['SSSIntensity'],
-                    'float Ks 			= %f;'	% node['Ks'],
-                    'float Kd 			= %f;'	% node['Kd'],
-                    'float Ka 			= %f;'	% node['Ka'],
-                    'float Roughness 	        = %f;'	% node['Roughness'],
-
-                    'output varying color outColor 			= 0;',
-                    'output varying color outTransparency	= 0;'
-            ]
+            # 3deligth shader extra parameters
+            shaderPars = []
 
             # shader code
             code=['''

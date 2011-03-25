@@ -25,58 +25,52 @@
 
 
 class AOV(slumSurface):
-	def ID(self):
-		'''
-			a unique ID that identifys the shader inside slum. If you upload
-			this template to a online repository, this method will be replaced
-			automatically by the repository server, with the next global available ID.
-		'''
-		return 114
+    def ID(self):
+        '''
+            a unique ID that identifys the shader inside slum. If you upload
+            this template to a online repository, this method will be replaced
+            automatically by the repository server, with the next global available ID.
+        '''
+        return 114
 
-	def parameters(self):
-		'''
-			This method defines all the parameter for our shader template. Keep in mind that here you define
-			the parameters that the user will see, not necessarily the same parameters of the shaders that this template
-			defines.
-		'''
-		#Intensity 	= parameter( 1.0, 'Intensity', help = 'Intensity of our diffuse factor. 0 disables.', max = 2, min = 0 )
-		Color 		= parameter( color(1), 'Color', help = 'Color to write in the AOV defined by AOV.' )
-		AOV 		= parameter( '', 'AOV' )
-		
-		OutColor 	= parameter( color(1), 'outColor', output=True ) # required for 3delight surface shaders
-		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+    def parameters(self):
+        '''
+            This method defines all the parameter for our shader template. Keep in mind that here you define
+            the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+            defines.
+        '''
+        #Intensity 	= parameter( 1.0, 'Intensity', help = 'Intensity of our diffuse factor. 0 disables.', max = 2, min = 0 )
+        Color 		= parameter( color(1), 'Color', help = 'Color to write in the AOV defined by AOV.' )
+        AOV 		= parameter( '', 'AOV' )
+        
+        OutColor 	= parameter( color(1), 'outColor', output=True ) # required for 3delight surface shaders
+        OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
-		return  group( [
-			Color,
-			AOV,
-			OutColor,
-			OutTransparency
-		], name = 'Simple Diffuse Shader' )
+        return  group( [
+            Color,
+            AOV,
+            OutColor,
+            OutTransparency
+        ], name = 'Simple Diffuse Shader' )
 
 
-	def delight(self, node):
-		'''
-			delight method is were you define the code for this shader, when rendering in 3delight.
-			this is a renderer method. a renderer method should allways return a tupple as:
-			( <list of strings that define the shader parameters>, <list of strings that define the shader code>)
-		'''
-		# shader parameters
-		shaderPars = [
-			'color Color = %s;' 					% node['Color'],
-			'shader_output varying color %s = 0;'	% node['AOV'],
-			'output varying color outColor=0;',
-			'output varying color outTransparency=0;'
-			#'shader_output varying color 
-		]
+    def delight(self, node):
+        '''
+            delight method is were you define the code for this shader, when rendering in 3delight.
+            this is a renderer method. a renderer method should allways return a tupple as:
+            ( <list of strings that define extra shader parameters>, <list of strings that define the shader code>)
+        '''
+        # shader extra parameters
+        shaderPars = []
 
-		# shader code
-		code=['''
-				%s = Color;
-				outColor = Color;
-			''' % node['AOV']]
+        # shader code
+        code=['''
+                %s = Color;
+                outColor = Color;
+            ''' % node['AOV']]
 
-		#if node['Intensity']:
-		#	code.append('''outColor = diffuse(normalize(N))*Color*Intensity;''')
+        #if node['Intensity']:
+        #	code.append('''outColor = diffuse(normalize(N))*Color*Intensity;''')
 
-		# return a tupple
-		return (shaderPars, code)
+        # return a tupple
+        return (shaderPars, code)

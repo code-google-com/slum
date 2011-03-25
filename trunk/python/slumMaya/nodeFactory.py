@@ -35,34 +35,34 @@ import slum
 from pprint import pprint
 
 userClassify = {
-	'surface' 	: 'shader/surface',
-	'displacement' 	: 'shader/displacement',
-	'float' 	: 'utility/general',
-	'color' 	: 'utility/color',
-	'light' 	: 'light',
+    'surface' 	: 'shader/surface',
+    'displacement' 	: 'shader/displacement',
+    'float' 	: 'utility/general',
+    'color' 	: 'utility/color',
+    'light' 	: 'light',
 }
 
 class swatchRender(OpenMayaRender.MSwatchRenderBase):
-	def __init__(self, mobj, mobjRender, res):
-		OpenMayaRender.MSwatchRenderBase(self, mobj, mobjRender, res)
-		print mobj, mobjRender, res
-		pass
-	def doIteration (self):
-		pass
-	def swatchNode (self):
-		#returns the node for which the swatch is required to be generated
-		pass
-	def node (self):
-		#returns the node used to compute the swatch
-		pass
-	def resolution (self):
-		#returns the expected resolution of the swatch image
-		pass
-	def image (self):
-		# returns the swatch image
-		pass
-	def createObj(self):
-		pass
+    def __init__(self, mobj, mobjRender, res):
+        OpenMayaRender.MSwatchRenderBase(self, mobj, mobjRender, res)
+        print mobj, mobjRender, res
+        pass
+    def doIteration (self):
+        pass
+    def swatchNode (self):
+        #returns the node for which the swatch is required to be generated
+        pass
+    def node (self):
+        #returns the node used to compute the swatch
+        pass
+    def resolution (self):
+        #returns the expected resolution of the swatch image
+        pass
+    def image (self):
+        # returns the swatch image
+        pass
+    def createObj(self):
+        pass
 
 
 class nodeFactory:

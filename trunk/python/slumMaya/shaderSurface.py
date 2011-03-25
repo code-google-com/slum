@@ -28,10 +28,12 @@ from maya.mel import eval as meval
 import shaderBase
 
 try:
-	#mayaBaseClass = OpenMayaMPx.MPxHardwareShader
-	mayaBaseClass = OpenMayaMPx.MPxHwShaderNode
+    mayaBaseClass = OpenMayaMPx.MPxHardwareShader
+    #mayaBaseClass = OpenMayaMPx.MPxHwShaderNode
 except:
-	mayaBaseClass = OpenMayaMPx.MPxNode
+    mayaBaseClass = OpenMayaMPx.MPxNode
+
+#mayaBaseClass = OpenMayaMPx.MPxNode
 
 #class shaderSurface( mayaBaseClass  ):
 class shaderSurface( mayaBaseClass, shaderBase.shaderBase ):

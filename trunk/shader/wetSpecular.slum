@@ -24,67 +24,60 @@
 # ---------------------------------------------------------------------------
 
 class wetSpecular(slumSurface):
-	def ID(self):
-		return 109
+    def ID(self):
+        return 109
 
-	def parameters(self):
-		Ks 				= parameter( 1.0, 'Ks', help = 'Ks.', max = 10, min = 0 )
-		roughness 		= parameter( 1.0, 'roughness', help = 'roughness.', max = 10, min = 0 )
-		sharpness 		= parameter( 1.0, 'sharpness', help = 'sharpness.', max = 10, min = 0 )
-		coloration		= parameter( color(1), 'coloration', help = 'Color for the specular.' )
+    def parameters(self):
+        Ks 				= parameter( 1.0, 'Ks', help = 'Ks.', max = 10, min = 0 )
+        roughness 		= parameter( 1.0, 'roughness', help = 'roughness.', max = 10, min = 0 )
+        sharpness 		= parameter( 1.0, 'sharpness', help = 'sharpness.', max = 10, min = 0 )
+        coloration		= parameter( color(1), 'coloration', help = 'Color for the specular.' )
 
-		OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
-		OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+        OutColor 		= parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shaders
+        OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
 
-		return  group( [
-			OutColor,
-			OutTransparency,
-			Ks,
-			roughness,
-			sharpness,
-			coloration,
-		], name = 'WetSpecular' )
+        return  group( [
+            OutColor,
+            OutTransparency,
+            Ks,
+            roughness,
+            sharpness,
+            coloration,
+        ], name = 'WetSpecular' )
 
 
-	def delight(self, node):
-		# 3deligth shader parameters
-		shaderPars = [
-			'float Ks 	= %f;'	% node['Ks'],
-			'float roughness 	= %f;'	% node['roughness'],
-			'float sharpness 	= %f;'	% node['sharpness'],
-			'color coloration		= %s;'	% node['coloration'],
-			'shader_output varying color _WETSPECULAR=0;',
+    def delight(self, node):
+        # 3deligth shader extra parameters
+        shaderPars = [
+            'shader_output varying color _WETSPECULAR=0;',
+        ]
 
-			'output varying color outColor=0;',
-			'output varying color outTransparency=0;'
-		]
+        # shader code
+        code=['''
+            color Brillantez( normal N; vector V; float roughness, sharpness; )
+            {
+                color C = 0;
+                float w = .18 * (1-sharpness);
+                extern point P;
 
-		# shader code
-		code=['''
-			color Brillantez( normal N; vector V; float roughness, sharpness; )
-			{
-				color C = 0;
-				float w = .18 * (1-sharpness);
-				extern point P;
+                illuminance (P, N, PI/2) {
+                    /* Must declare extern L & Cl because we're in a function */
+                    extern vector L;  extern color Cl;
+                    float nonspec = 0;
+                    lightsource ("__nonspecular", nonspec);
+                    if (nonspec < 1) {
+                        vector H = normalize(normalize(L)+V);
+                        C += Cl * ((1-nonspec) * smoothstep (.72-w, .72+w, pow(max(0,N.H), 1/roughness)));
+                    }
+                }
+                return C;
+            }
+            extern normal N;
+            extern vector I;
+            normal Nf 	 = faceforward (normalize(N), I, normalize(N));
+            outColor 	 = coloration * Ks * Brillantez(Nf, -normalize(I), roughness, sharpness);
+            _WETSPECULAR = coloration * Ks * Brillantez(Nf, -normalize(I), roughness, sharpness);
+        ''']
 
-				illuminance (P, N, PI/2) {
-					/* Must declare extern L & Cl because we're in a function */
-					extern vector L;  extern color Cl;
-					float nonspec = 0;
-					lightsource ("__nonspecular", nonspec);
-					if (nonspec < 1) {
-						vector H = normalize(normalize(L)+V);
-						C += Cl * ((1-nonspec) * smoothstep (.72-w, .72+w, pow(max(0,N.H), 1/roughness)));
-					}
-				}
-				return C;
-			}
-			extern normal N;
-			extern vector I;
-			normal Nf 	 = faceforward (normalize(N), I, normalize(N));
-			outColor 	 = coloration * Ks * Brillantez(Nf, -normalize(I), roughness, sharpness);
-			_WETSPECULAR = coloration * Ks * Brillantez(Nf, -normalize(I), roughness, sharpness);
-		''']
-
-		# return a tupple
-		return (shaderPars, code)
+        # return a tupple
+        return (shaderPars, code)

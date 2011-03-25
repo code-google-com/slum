@@ -22,6 +22,6 @@ os.environ['MAYA_CMD_FILE_OUTPUT']='/tmp/mayalog'
 os.environ['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = "1"
 
 
-cmd = 'bash -i -l -c "maya  %s"' % scene
+cmd = '$MAYAROOT/maya  %s' % scene
 print cmd
 os.system(cmd)

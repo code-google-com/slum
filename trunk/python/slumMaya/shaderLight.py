@@ -31,106 +31,106 @@ import shaderBase
 gl = OpenMayaRender.MHardwareRenderer.theRenderer().glFunctionTable()
 
 class shaderNetworkRasterize:
-	def __init__(self, nodePlug, resolution=(320,200)):
-		self.resolution = resolution
-		self.w = resolution[0]
-		self.h = resolution[1]
-		self.node = nodePlug
-		self.refresh = True
-		self.texture = None
+    def __init__(self, nodePlug, resolution=(320,200)):
+        self.resolution = resolution
+        self.w = resolution[0]
+        self.h = resolution[1]
+        self.node = nodePlug
+        self.refresh = True
+        self.texture = None
 
-	def free(self):
-		if self.texture:
-			gl.glDeleteTextures( 1, self.texture );
-		self.refresh=True;
+    def free(self):
+        if self.texture:
+            gl.glDeleteTextures( 1, self.texture );
+        self.refresh=True;
 
-	def needRefresh(self):
-		return self.refresh
+    def needRefresh(self):
+        return self.refresh
 
-	def sample(self):
-		uCoords 	= OpenMaya.MFloatArray()
-		vCoords 	= OpenMaya.MFloatArray()
-		filterSizes	= OpenMaya.MFloatArray()
-		points		= OpenMaya.MFloatPointArray()
-		refPoints	= OpenMaya.MFloatPointArray()
-		normals		= OpenMaya.MFloatVectorArray()
-		tanUs		= OpenMaya.MFloatVectorArray()
-		tanVs		= OpenMaya.MFloatVectorArray()
-		colors		= OpenMaya.MFloatVectorArray()
-		transps		= OpenMaya.MFloatVectorArray()
+    def sample(self):
+        uCoords 	= OpenMaya.MFloatArray()
+        vCoords 	= OpenMaya.MFloatArray()
+        filterSizes	= OpenMaya.MFloatArray()
+        points		= OpenMaya.MFloatPointArray()
+        refPoints	= OpenMaya.MFloatPointArray()
+        normals		= OpenMaya.MFloatVectorArray()
+        tanUs		= OpenMaya.MFloatVectorArray()
+        tanVs		= OpenMaya.MFloatVectorArray()
+        colors		= OpenMaya.MFloatVectorArray()
+        transps		= OpenMaya.MFloatVectorArray()
 
-		# current camera
-		cameraPath  = OpenMaya.M3dView.active3dView().getCamera( )
-		cameraMat 	= cameraPath.inclusiveMatrix().matrix
+        # current camera
+        cameraPath  = OpenMaya.M3dView.active3dView().getCamera( )
+        cameraMat 	= cameraPath.inclusiveMatrix().matrix
 
-		numSamples=0;
-		for x in range(self.w):
-			for y in range(self.h):
-				uCoords.append( x/float(self.w) )
-				vCoords.append( y/float(self.h) )
-				numSamples += 1
+        numSamples=0;
+        for x in range(self.w):
+            for y in range(self.h):
+                uCoords.append( x/float(self.w) )
+                vCoords.append( y/float(self.h) )
+                numSamples += 1
 
-		# sample network and bake
-		OpenMayaRender.MRenderUtil.sampleShadingNetwork(
-			node,
-			numSamples,
-			false, #shadow
-			false, #reuse maps
-			cameraMat,
-			points,
-			uCoords,
-			vCoords,
-			normals,
-			refPoints,
-			tanUs,
-			tanVs,
-			filterSizes,
-			colors,
-			transps
-		);
+        # sample network and bake
+        OpenMayaRender.MRenderUtil.sampleShadingNetwork(
+            node,
+            numSamples,
+            false, #shadow
+            false, #reuse maps
+            cameraMat,
+            points,
+            uCoords,
+            vCoords,
+            normals,
+            refPoints,
+            tanUs,
+            tanVs,
+            filterSizes,
+            colors,
+            transps
+        );
 
-		data = []
-		if colors.length()>0:
-			numSamples=0
-			for x in range(self.w):
-				for y in range(self.h):
-						data[numSamples*3+0] = colors[numSamples].x * 255
-						data[numSamples*3+1] = colors[numSamples].y * 255
-						data[numSamples*3+2] = colors[numSamples].z * 255
-						numSamples += 1
-		return data
+        data = []
+        if colors.length()>0:
+            numSamples=0
+            for x in range(self.w):
+                for y in range(self.h):
+                        data[numSamples*3+0] = colors[numSamples].x * 255
+                        data[numSamples*3+1] = colors[numSamples].y * 255
+                        data[numSamples*3+2] = colors[numSamples].z * 255
+                        numSamples += 1
+        return data
 
-	def bind(self):
-		if self.refresh:
-			self.texture = gl.glGenTextures( 1 )
-			gl.glBindTexture( gl.GL_TEXTURE_2D, self.texture )
+    def bind(self):
+        if self.refresh:
+            self.texture = gl.glGenTextures( 1 )
+            gl.glBindTexture( gl.GL_TEXTURE_2D, self.texture )
 
-			gl.glTexParameterf( gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR )
-			gl.glTexParameterf( gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR )
+            gl.glTexParameterf( gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR )
+            gl.glTexParameterf( gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR )
 
-			gl.glTexImage2D(
-				gl.GL_TEXTURE_2D,
-				0,
-				gl.GL_RGB,
-				self.w, self.h,
-				0,
-				gl.GL_RGB,
-				gl.GL_UNSIGNED_BYTE,
-				self.sample()
-			)
-			self.refresh = False
+            gl.glTexImage2D(
+                gl.GL_TEXTURE_2D,
+                0,
+                gl.GL_RGB,
+                self.w, self.h,
+                0,
+                gl.GL_RGB,
+                gl.GL_UNSIGNED_BYTE,
+                self.sample()
+            )
+            self.refresh = False
 
-		if self.texture:
-			gl.glBindTexture( gl.GL_TEXTURE_2D, self.texture )
+        if self.texture:
+            gl.glBindTexture( gl.GL_TEXTURE_2D, self.texture )
 
 
 
 class shaderLight( shaderBase.shaderBase, OpenMayaMPx.MPxLocatorNode ):
-	def __init__(self):
-		''' we call __init__ of shaderBase and MPxLocatorNode classes in here '''
-		shaderBase.shaderBase.__init__(self)
-		OpenMayaMPx.MPxLocatorNode.__init__(self)
-	@staticmethod
-	def nodeCreator():
-		''' we override this method to return the proper object of this class '''
-		return OpenMayaMPx.asMPxPtr( shaderLight() )
+    def __init__(self):
+        ''' we call __init__ of shaderBase and MPxLocatorNode classes in here '''
+        shaderBase.shaderBase.__init__(self)
+        OpenMayaMPx.MPxLocatorNode.__init__(self)
+    @staticmethod
+    def nodeCreator():
+        ''' we override this method to return the proper object of this class '''
+        return OpenMayaMPx.asMPxPtr( shaderLight() )
