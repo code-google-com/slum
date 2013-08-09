@@ -4,9 +4,12 @@ import os,sys
 
 
 scene = ''
-if len(sys.argv)>1:
-	scene = sys.argv[1]
+if len(sys.argv)>2:
+	scene = sys.argv[2]
 
+maya = 'maya'
+if len(sys.argv)>1:
+	maya = sys.argv[1]
 if os.environ.has_key('COMSPEC'):
 	os.environ['MAYA_PLUG_IN_PATH'] += ';'+os.popen('cygpath -wa ./python').readlines()[0].strip()
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('cygpath -wa ./shader').readlines()[0].strip()
@@ -14,6 +17,7 @@ if os.environ.has_key('COMSPEC'):
 	#maya = os.popen('cygpath -wa "%s"' % maya).readlines()[0].strip()
 	#maya += '.exe'
 else:
+	os.environ['PYTHONPATH'] = os.popen('echo `pwd`/python').readlines()[0].strip()
 	os.environ['MAYA_PLUG_IN_PATH'] = os.popen('echo `pwd`/python').readlines()[0].strip()
 	os.environ['SLUM_SEARCH_PATH'] 	= os.popen('echo `pwd`/shader').readlines()[0].strip()
 
@@ -22,6 +26,6 @@ os.environ['MAYA_CMD_FILE_OUTPUT']='/tmp/mayalog'
 os.environ['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = "1"
 
 
-cmd = '$MAYAROOT/maya  %s' % scene
+cmd = 'run %s  %s' % (maya,scene)
 print cmd
 os.system(cmd)

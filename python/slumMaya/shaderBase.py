@@ -28,7 +28,7 @@ from maya.mel import eval as meval
 from nodeFactory import *
 import slumMaya
 import slum
-import os, md5, textwrap, sys, traceback
+import os, textwrap, sys, traceback
 
 global AETemplateCache
 AETemplate={}
