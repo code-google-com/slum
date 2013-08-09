@@ -23,7 +23,7 @@
 
 
 import os, glob, traceback, sys, copy
-import md5 as __md5
+import hashlib as __md5
 #from  safeEval import safe_eval
 
 
