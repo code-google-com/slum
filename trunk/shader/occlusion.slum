@@ -105,8 +105,9 @@ class occlusion(slumColor):
                     "environmentdir", bn,
                     "label", "occlusion",
                     "bias", Bias,
-                    "adaptive", Adaptive
+                    "adaptive", AdaptiveSampling
                 );
+                occ = pow( occ * Intensity, Gamma );
             ''')
 
         if node['OutputAs'] is 0:
